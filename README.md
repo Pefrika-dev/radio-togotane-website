@@ -4,6 +4,8 @@ A complete, dependency-free website proposal for **Radio Togotane 88.3 FM**, Keh
 
 Everything that was not supplied or publicly published by the station is either omitted or clearly marked as pending. No presenters' biographies, news stories, events, social profiles, audience figures, awards, coverage claims or advertising rates have been invented.
 
+**Live copy of this proposal:** <https://pefrika-dev.github.io/radio-togotane-website/> (GitHub Pages, served from the `main` branch of this repository). The station's own domain can replace it at any time by running `npm run seo -- https://your-domain` and redeploying.
+
 ---
 
 ## 1. What is included
@@ -261,6 +263,8 @@ Then:
 The built site is plain static files. Deploy the generated root HTML files, `assets/` (including `assets/data/episodes.json`), `media/`, `robots.txt` and (when generated) `sitemap.xml` and `podcast.xml` to any static host — Netlify, Cloudflare Pages, GitHub Pages, Vercel, or the station's own server. Do **not** upload `src/`, `scripts/`, `tools/`, `server.js`, `build.js`, `package.json`, the README or temporary folders.
 
 If the host runs a build step, use `node build.js` with the project root as the publish directory. If it serves files directly, build locally and upload the outputs.
+
+**Current hosting:** GitHub Pages, legacy build from the `main` branch root, at <https://pefrika-dev.github.io/radio-togotane-website/>. Verified working there on 2026-10-30: every page and asset returns 200, the Zeno stream plays (“Live audio playing”), the archive clip plays and seeks (`206 Partial Content`, so byte ranges work), the custom 404 page answers unknown paths, and the EN/SW and light/dark switches persist across pages and reloads. Because Pages serves the whole repository, `/src/`, `/scripts/` and `/tools/` are also reachable as plain text; they contain no secrets, but for a tighter deploy use a workflow that publishes only the built files. Pages also does not allow custom HTTP headers, so the security headers below apply to other hosts.
 
 The recorder is a server-side process, not part of the static site. Run it where it can stay online, then sync or upload `media/podcasts/` and `assets/data/episodes.json` to the host after each hour (or serve `media/` from the same always-on machine). A static host alone will not record anything. The host must support HTTP byte ranges for MP3 files, or seeking inside recordings will not work; the preview server does.
 
