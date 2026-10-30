@@ -6,6 +6,6 @@ Thumbs.db
 # Recorder writes each hour as .part and renames it when complete
 media/podcasts/*.part
 
-# Generated only once a real site URL is set in site.json
-sitemap.xml
-podcast.xml
+# sitemap.xml and podcast.xml are generated, but GitHub Pages serves the
+# repository as-is, so they are committed on purpose. Regenerate with
+# `npm run seo -- <url>` (sitemap) or by running the recorder (podcast feed).

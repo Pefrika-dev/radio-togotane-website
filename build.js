@@ -55,10 +55,11 @@ for (const file of pages) {
   if (!meta.title || !meta.description) throw new Error(`${file} needs a title and description`);
   if (!meta.page) throw new Error(`${file} needs a page id`);
 
-  const absolute = siteUrl ? `${siteUrl}${pagePath}` : '';
+  // 404.html answers unknown paths, so it must not claim a canonical URL of its own.
+  const absolute = siteUrl && name !== '404' ? `${siteUrl}${pagePath}` : '';
   const canonical = absolute ? `<link rel="canonical" href="${escapeAttr(absolute)}">` : '';
   const ogUrl = absolute ? `<meta property="og:url" content="${escapeAttr(absolute)}">` : '';
-  const ogImage = siteUrl
+  const ogImage = absolute
     ? `<meta property="og:image" content="${escapeAttr(`${siteUrl}/assets/images/hero-studio-1200.jpg`)}">`
     : '';
 
