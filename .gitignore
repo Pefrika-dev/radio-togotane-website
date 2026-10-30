@@ -9,3 +9,8 @@ media/podcasts/*.part
 # sitemap.xml and podcast.xml are generated, but GitHub Pages serves the
 # repository as-is, so they are committed on purpose. Regenerate with
 # `npm run seo -- <url>` (sitemap) or by running the recorder (podcast feed).
+
+.vercel
+
+# Vercel project link and local build output
+.vercel/
