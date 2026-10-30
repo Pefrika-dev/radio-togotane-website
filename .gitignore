@@ -1,0 +1,11 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# Recorder writes each hour as .part and renames it when complete
+media/podcasts/*.part
+
+# Generated only once a real site URL is set in site.json
+sitemap.xml
+podcast.xml

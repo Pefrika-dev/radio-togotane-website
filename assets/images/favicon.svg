@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Radio Togotane 88.3 FM">
+  <rect width="64" height="64" rx="14" fill="#0b0f14"/>
+  <g fill="none" stroke="#f5a94f" stroke-width="5" stroke-linecap="round">
+    <path d="M18 26v12"/>
+    <path d="M26 20v24" opacity=".72"/>
+    <path d="M34 14v36"/>
+    <path d="M42 20v24" opacity=".72"/>
+    <path d="M50 26v12"/>
+  </g>
+</svg>

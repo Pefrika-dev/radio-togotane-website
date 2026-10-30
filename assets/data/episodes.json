@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-10-30T10:33:18+03:00",
+  "timezone": "Africa/Nairobi",
+  "bitrateKbps": 128,
+  "note": "One file per hour of the online stream. Programme labels follow the published schedule.",
+  "episodes": [
+    {
+      "id": "2026-10-30-102920-tabataba",
+      "file": "media/podcasts/2026-10-30_102920_tabataba.mp3",
+      "programmeId": "tabataba",
+      "programme": "Tabataba",
+      "presenters": [
+        "Terry Rhobi (Superlady)"
+      ],
+      "startedAt": "2026-10-30T10:29:20+03:00",
+      "endedAt": "2026-10-30T10:33:18+03:00",
+      "durationSeconds": 249,
+      "bytes": 3977300
+    }
+  ]
+}

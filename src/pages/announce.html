@@ -1,0 +1,136 @@
+---
+title: Submit a Community Announcement — Radio Togotane 88.3 FM
+description: Submit a condolence, lost-and-found notice, meeting, church, school or public announcement to Radio Togotane 88.3 FM. Every submission is reviewed by station staff before broadcast.
+page: announce
+bodyClass: page-announce
+---
+<main id="main">
+  <header class="page-hero page-hero--compact">
+    <div class="container page-hero__inner">
+      <p class="eyebrow" data-i18n="announce.eyebrow">Community announcements</p>
+      <h1 class="page-hero__title" data-i18n="announce.heroTitle">Share a notice with the community.</h1>
+      <p class="page-hero__lead" data-i18n="announce.heroLead">Condolences, lost and found items, meetings, church, school and public notices can be submitted for review. Station staff decide what is broadcast or published; submitting a notice does not guarantee it will be used.</p>
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="categories-title">
+    <div class="container">
+      <div class="section__head section__head--stack">
+        <p class="eyebrow" data-i18n="announce.categoriesEyebrow">What can be announced</p>
+        <h2 class="section__title" id="categories-title" data-i18n="announce.categoriesTitle">Notices the station can review.</h2>
+      </div>
+      <ul class="category-list">
+        <li data-i18n="announce.cat.condolence">Condolences</li>
+        <li data-i18n="announce.cat.lost">Lost items</li>
+        <li data-i18n="announce.cat.found">Found items</li>
+        <li data-i18n="announce.cat.meeting">Community meetings</li>
+        <li data-i18n="announce.cat.church">Church announcements</li>
+        <li data-i18n="announce.cat.school">School announcements</li>
+        <li data-i18n="announce.cat.event">Public events</li>
+        <li data-i18n="announce.cat.organisation">Organisation announcements</li>
+        <li data-i18n="announce.cat.notice">Public notices</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--rule" id="announce-form-section" aria-labelledby="form-title">
+    <div class="container form-layout">
+      <div class="form-layout__main">
+        <h2 class="section__title" id="form-title" data-i18n="announce.formTitle">Submit an announcement.</h2>
+        <p class="section__lead" data-i18n="announce.formLead">Give the station enough detail to understand the notice. Fields marked with an asterisk are required.</p>
+
+        <form class="form" id="announce-form" data-form="announce" novalidate>
+          <div class="form__grid">
+            <div class="field">
+              <label for="announce-category"><span data-i18n="announce.formCategory">Announcement category</span> <span class="req" aria-hidden="true">*</span></label>
+              <select id="announce-category" name="category" required aria-describedby="announce-category-error">
+                <option value="" data-i18n="forms.selectOne">Choose one…</option>
+                <option value="condolence" data-i18n="announce.cat.condolence">Condolences</option>
+                <option value="lost" data-i18n="announce.cat.lost">Lost items</option>
+                <option value="found" data-i18n="announce.cat.found">Found items</option>
+                <option value="meeting" data-i18n="announce.cat.meeting">Community meetings</option>
+                <option value="church" data-i18n="announce.cat.church">Church announcements</option>
+                <option value="school" data-i18n="announce.cat.school">School announcements</option>
+                <option value="event" data-i18n="announce.cat.event">Public events</option>
+                <option value="organisation" data-i18n="announce.cat.organisation">Organisation announcements</option>
+                <option value="notice" data-i18n="announce.cat.notice">Public notices</option>
+              </select>
+              <p class="field__error" id="announce-category-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label for="announce-name"><span data-i18n="forms.name">Your name</span> <span class="req" aria-hidden="true">*</span></label>
+              <input type="text" id="announce-name" name="name" autocomplete="name" maxlength="80" required aria-describedby="announce-name-error">
+              <p class="field__error" id="announce-name-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label for="announce-phone"><span data-i18n="forms.phone">Phone number</span> <span class="req" aria-hidden="true">*</span></label>
+              <input type="tel" id="announce-phone" name="phone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="07XX XXX XXX" required aria-describedby="announce-phone-error">
+              <p class="field__error" id="announce-phone-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label for="announce-preference" data-i18n="announce.formPreferred">Preferred contact method</label>
+              <select id="announce-preference" name="preference">
+                <option value="whatsapp" data-i18n="forms.whatsapp">WhatsApp</option>
+                <option value="call" data-i18n="forms.call">Phone call</option>
+                <option value="sms" data-i18n="forms.sms">SMS</option>
+                <option value="email" data-i18n="forms.email">Email</option>
+              </select>
+            </div>
+
+            <div class="field field--full">
+              <label for="announce-email" data-i18n="forms.emailOptional">Email address (optional)</label>
+              <input type="email" id="announce-email" name="email" autocomplete="email" maxlength="120" aria-describedby="announce-email-error">
+              <p class="field__error" id="announce-email-error" hidden></p>
+            </div>
+
+            <div class="field field--full">
+              <label for="announce-details"><span data-i18n="announce.formDetails">Announcement details</span> <span class="req" aria-hidden="true">*</span></label>
+              <textarea id="announce-details" name="details" rows="7" maxlength="1500" required aria-describedby="announce-details-hint announce-details-error"></textarea>
+              <p class="field__hint" id="announce-details-hint" data-i18n="announce.formDetailsHint">Include names, dates, places and any wording the station should use. Do not include private information that should not be broadcast.</p>
+              <p class="field__error" id="announce-details-error" hidden></p>
+            </div>
+
+            <div class="field field--full">
+              <label class="check" for="announce-consent">
+                <input type="checkbox" id="announce-consent" name="consent" required aria-describedby="announce-consent-error">
+                <span><span data-i18n="announce.consent">I agree that the station may use these details to review and respond to this announcement request.</span> <span class="req" aria-hidden="true">*</span></span>
+              </label>
+              <p class="field__error" id="announce-consent-error" hidden></p>
+            </div>
+          </div>
+
+          <div class="form__actions">
+            <button type="submit" class="btn btn--accent" data-i18n="announce.submit">Send announcement request</button>
+            <button type="button" class="btn btn--ghost" data-form-email="announce" data-i18n="announce.emailInstead">Send by email instead</button>
+          </div>
+
+          <div class="form-status" id="announce-status" role="status" aria-live="polite"></div>
+          <p class="form__note" data-i18n="announce.formNote">This proposal site does not store submissions. Pressing send opens WhatsApp with your details so you can review and send them to the station yourself. Nothing is published automatically.</p>
+        </form>
+      </div>
+
+      <aside class="form-layout__aside">
+        <div class="note-card">
+          <p class="eyebrow" data-i18n="announce.reviewEyebrow">Review process</p>
+          <h3 class="note-card__title" data-i18n="announce.reviewTitle">Every notice is checked first.</h3>
+          <ol class="review-steps">
+            <li data-i18n="announce.review1">You send the request to the station team.</li>
+            <li data-i18n="announce.review2">Station staff review the wording, details and suitability.</li>
+            <li data-i18n="announce.review3">The station decides whether, when and how to broadcast or publish it.</li>
+          </ol>
+          <p class="note-card__foot" data-i18n="announce.reviewFoot">Submission does not guarantee broadcast or publication, and does not create a booking or payment.</p>
+        </div>
+
+        <div class="note-card note-card--quiet">
+          <p class="eyebrow" data-i18n="announce.privacyEyebrow">Your information</p>
+          <h3 class="note-card__title" data-i18n="announce.privacyTitle">Handled with care.</h3>
+          <p data-i18n="announce.privacyBody">The details you type here are used to prepare a message to the station. This website does not save them. WhatsApp or your email app handles the message you choose to send, under its own privacy terms.</p>
+          <p class="note-card__foot" data-i18n="announce.privacyFoot">Only include personal details that are necessary for the announcement.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>

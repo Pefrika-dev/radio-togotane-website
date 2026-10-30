@@ -1,0 +1,103 @@
+---
+title: Listen Back — Radio Togotane 88.3 FM
+description: Listen back to Radio Togotane 88.3 FM. The station's online stream is recorded automatically in hourly files so you can replay a programme you missed in Kehancha and Migori County.
+page: podcasts
+bodyClass: page-podcasts
+---
+<main id="main">
+  <header class="page-hero page-hero--compact">
+    <div class="container page-hero__inner">
+      <p class="eyebrow" data-i18n="podcasts.eyebrow">Listen back</p>
+      <h1 class="page-hero__title" data-i18n="podcasts.heroTitle">Missed a programme? Press play.</h1>
+      <p class="page-hero__lead" data-i18n="podcasts.heroLead">The station's online stream is recorded automatically, hour by hour. Recordings appear here as soon as they are saved, so you can listen back to a programme you missed.</p>
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="archive-title">
+    <div class="container podcasts__layout">
+      <div class="podcasts__main">
+        <div class="section__head podcasts__head">
+          <div>
+            <p class="eyebrow" data-i18n="podcasts.latestEyebrow">The archive</p>
+            <h2 class="section__title" id="archive-title" data-i18n="podcasts.latestTitle">Recent recordings</h2>
+          </div>
+          <div class="podcasts__head-side">
+            <p class="podcasts__count" id="podcasts-count" role="status" aria-live="polite" data-i18n="podcasts.loadingList">Loading recordings…</p>
+            <button type="button" class="btn btn--ghost btn--sm" data-podcast-refresh data-i18n="podcasts.refresh">Check for new recordings</button>
+          </div>
+        </div>
+
+        <div class="filters podcasts__filters" data-podcast-filters role="group" aria-label="Filter recordings by programme" data-i18n-aria-label="podcasts.filterLabel" hidden></div>
+
+        <ol class="episode-list" data-episode-list></ol>
+
+        <div class="empty-state empty-state--wide" data-podcast-empty hidden>
+          <p class="empty-state__title" data-i18n="podcasts.emptyTitle">No recordings yet</p>
+          <p class="empty-state__body" data-i18n="podcasts.emptyBody">Automatic recording starts when the station launches its recorder. Until the first file is saved, this page stays empty rather than listing programmes that were not captured.</p>
+          <div class="empty-state__actions">
+            <button type="button" class="btn btn--accent btn--sm js-play" data-i18n="actions.listenLive">Listen live</button>
+            <a class="btn btn--ghost btn--sm" href="programs.html" data-i18n="actions.viewSchedule">View schedule</a>
+          </div>
+        </div>
+
+        <div class="empty-state empty-state--wide" data-podcast-error hidden>
+          <p class="empty-state__title" data-i18n="podcasts.listErrorTitle">The recording list could not be loaded</p>
+          <p class="empty-state__body" data-i18n="podcasts.listErrorBody">The archive manifest was not available. Refresh the page, or contact the station if the problem continues.</p>
+          <div class="empty-state__actions">
+            <a class="btn btn--ghost btn--sm" href="contact.html" data-i18n="actions.contactStation">Contact the station</a>
+          </div>
+        </div>
+
+        <p class="podcasts__note" data-i18n="podcasts.listNote">A gap means the stream was offline or capture was stopped. Nothing is filled in or simulated.</p>
+
+        <noscript>
+          <p class="podcasts__note" data-i18n="podcasts.noscript">The recording list needs JavaScript. You can still listen live on 88.3 FM or with the player on the home page.</p>
+        </noscript>
+      </div>
+
+      <aside class="archive-player" data-archive-player aria-labelledby="archive-player-title">
+        <p class="eyebrow" data-i18n="podcasts.playerEyebrow">Archive player</p>
+        <h2 class="archive-player__title" id="archive-player-title" data-archive-player-title data-i18n="podcasts.playerTitle">Choose a recording</h2>
+        <p class="archive-player__meta" data-archive-player-meta data-i18n="podcasts.playerReady">Pick any recording from the list to listen back.</p>
+
+        <div class="archive-player__bar">
+          <button type="button" class="archive-player__play" data-archive-play aria-label="Play recording" data-i18n-aria-label="podcasts.play" disabled>
+            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="7" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.4" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/></svg>
+          </button>
+          <div class="archive-player__track">
+            <label class="sr-only" for="archive-seek" data-i18n="podcasts.seek">Seek within the recording</label>
+            <input class="archive-player__seek" id="archive-seek" type="range" min="0" max="100" value="0" step="0.1" disabled data-archive-seek>
+            <div class="archive-player__times">
+              <span data-archive-current>0:00</span>
+              <span data-archive-duration>0:00</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="archive-player__status" data-archive-status role="status" aria-live="polite" data-i18n="podcasts.playerReady">Pick any recording from the list to listen back.</p>
+        <p class="archive-player__tag"><span class="capture-dot" aria-hidden="true"></span><span data-i18n="podcasts.autoTag">Recorded automatically from the station stream</span></p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--rule" aria-labelledby="podcast-notes-title">
+    <div class="container prose-grid">
+      <div>
+        <h2 class="section__title" id="podcast-notes-title" data-i18n="podcasts.notesTitle">How listen-back works.</h2>
+        <p data-i18n="podcasts.notesBody1">The station's recorder saves the online stream in hourly files, using East Africa Time, and updates this page from the files it has written.</p>
+        <p data-i18n="podcasts.notesBody2">Programme names and presenter names come from the published schedule. In a recording they are labels, not proof that a named presenter was on air.</p>
+        <p data-i18n="podcasts.notesBody3">If the stream goes offline, that time is missing from the archive. Nothing is filled in, re-created or simulated.</p>
+        <p data-i18n="podcasts.notesBody4">The archive belongs to the station. Music and third-party material in a recording may need clearance before the file is published more widely.</p>
+        <a class="link-arrow" href="programs.html" data-i18n="actions.fullSchedule">Full schedule</a>
+      </div>
+      <aside class="note-card">
+        <p class="eyebrow" data-i18n="podcasts.captureEyebrow">Automatic capture</p>
+        <h3 class="note-card__title" data-i18n="podcasts.captureTitle">Start it once, and the archive fills itself.</h3>
+        <p data-i18n="podcasts.captureBody">The recorder runs beside the live stream on a computer that stays online. It writes a new file every hour without anyone adding episodes by hand.</p>
+        <p class="note-card__foot" data-i18n="podcasts.captureFoot">If the recorder stops, no new files appear. Recordings already saved stay available.</p>
+        <button type="button" class="btn btn--accent btn--wide js-play" data-i18n="podcasts.liveLink">Listen live instead</button>
+      </aside>
+    </div>
+  </section>
+</main>

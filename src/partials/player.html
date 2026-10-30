@@ -1,0 +1,44 @@
+<div class="dock" id="player-dock" role="region" aria-label="Live radio player" data-i18n-aria-label="player.region">
+  <div class="container dock__inner">
+    <button type="button" class="dock__play js-play" aria-label="Listen live" data-i18n-aria-label="player.play">
+      <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg>
+      <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="7" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.4" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none"/></svg>
+      <span class="loading-ring" aria-hidden="true"></span>
+    </button>
+
+    <div class="dock__meta">
+      <p class="dock__title">Radio Togotane <span>88.3 FM</span></p>
+      <p class="dock__now" id="dock-now">Published programme schedule</p>
+    </div>
+
+    <div class="dock__status">
+      <span class="status" id="player-status">
+        <span class="status__dot" aria-hidden="true"></span>
+        <span id="player-status-text">Ready — press play to listen</span>
+      </span>
+      <span class="dock__aside" data-i18n="player.pendingShort" hidden>Online audio pending</span>
+    </div>
+
+    <div class="dock__volume">
+      <label class="sr-only" for="volume" data-i18n="player.volume">Volume</label>
+      <input id="volume" class="volume" type="range" min="0" max="100" step="1" value="80">
+    </div>
+
+    <a class="dock__schedule" href="programs.html" data-i18n="nav.schedule">Schedule</a>
+  </div>
+</div>
+<div class="sr-only" id="player-announcer" aria-live="polite"></div>
+
+<dialog class="sheet" id="stream-dialog" aria-labelledby="stream-dialog-title">
+  <button type="button" class="sheet__close" data-close-dialog aria-label="Close" data-i18n-aria-label="common.close">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <p class="eyebrow" data-i18n="player.dialogEyebrow">Live radio</p>
+  <h2 id="stream-dialog-title" data-i18n="player.pendingTitle">The live stream is not connected yet</h2>
+  <p data-i18n="player.pendingBody">Radio Togotane 88.3 FM has not supplied an authorised online stream address. When it does, the player on this site will carry the broadcast. Nothing is playing at the moment.</p>
+  <div class="sheet__actions">
+    <a class="btn btn--accent" href="contact.html#contact-form" data-i18n="player.pendingContact">Ask about online listening</a>
+    <a class="btn btn--ghost" href="programs.html" data-i18n="actions.fullSchedule">Full schedule</a>
+  </div>
+  <p class="sheet__note" data-i18n="player.pendingNote">The published programme schedule remains available while the online stream is offline.</p>
+</dialog>

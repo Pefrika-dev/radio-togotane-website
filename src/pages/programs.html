@@ -1,0 +1,85 @@
+---
+title: Programme Schedule — Radio Togotane 88.3 FM
+description: The published weekday and Saturday programme schedule for Radio Togotane 88.3 FM in Kehancha, with programme times, presenters and the Sunday schedule pending confirmation.
+page: programs
+bodyClass: page-programs
+---
+<main id="main">
+  <header class="page-hero page-hero--compact">
+    <div class="container page-hero__inner">
+      <p class="eyebrow" data-i18n="schedule.eyebrow">Programme schedule</p>
+      <h1 class="page-hero__title" data-i18n="schedule.heroTitle">The week, hour by hour.</h1>
+      <p class="page-hero__lead" data-i18n="schedule.heroLead">The station's published weekday and Saturday programmes, with presenters and East Africa Time. Sunday programming is still being confirmed.</p>
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="schedule-title">
+    <div class="container">
+      <h2 class="sr-only" id="schedule-title" data-i18n="schedule.title">Every voice has its hour.</h2>
+      <div class="schedule schedule--full" data-schedule>
+        <div class="schedule__bar">
+          <div class="tabs" role="tablist" aria-label="Programme schedule" data-i18n-aria-label="schedule.tabsLabel">
+            <button type="button" class="tab" role="tab" id="tab-weekday" aria-controls="panel-weekday" aria-selected="true" data-tab="weekday" data-i18n="schedule.weekdays">Mon–Fri</button>
+            <button type="button" class="tab" role="tab" id="tab-saturday" aria-controls="panel-saturday" aria-selected="false" tabindex="-1" data-tab="saturday" data-i18n="schedule.saturday">Saturday</button>
+            <button type="button" class="tab" role="tab" id="tab-sunday" aria-controls="panel-sunday" aria-selected="false" tabindex="-1" data-tab="sunday" data-i18n="schedule.sunday">Sunday</button>
+          </div>
+          <p class="schedule__clock"><span data-i18n="schedule.nowIn">Now in Nairobi</span> <time id="eat-clock">--:--</time> <span class="schedule__clock-zone">EAT</span></p>
+        </div>
+
+        <div class="schedule__panel" role="tabpanel" id="panel-weekday" aria-labelledby="tab-weekday" tabindex="0">
+          <div class="program-grid" data-programs></div>
+        </div>
+        <div class="schedule__panel" role="tabpanel" id="panel-saturday" aria-labelledby="tab-saturday" tabindex="0" hidden>
+          <div class="program-grid" data-programs></div>
+        </div>
+        <div class="schedule__panel" role="tabpanel" id="panel-sunday" aria-labelledby="tab-sunday" tabindex="0" hidden>
+          <div class="empty-state empty-state--wide">
+            <p class="empty-state__title" data-i18n="schedule.sundayTitle">Sunday programming is being confirmed</p>
+            <p class="empty-state__body" data-i18n="schedule.sundayBody">The station has not yet published its Sunday schedule. Confirmed details will be added here, and will not be guessed in the meantime.</p>
+            <a class="btn btn--ghost btn--sm" href="contact.html" data-i18n="actions.contactStation">Contact the station</a>
+          </div>
+        </div>
+
+        <p class="schedule__note" data-i18n="schedule.note">Programme details follow the station's published schedule. Unless the player shows a live connection, this is not a confirmation that a presenter is on air.</p>
+      </div>
+
+      <noscript>
+        <div class="noscript">
+          <p><strong>Monday to Friday</strong></p>
+          <ul>
+            <li>Ikihita — 05:00–09:00 — John Rioba (Warioba Senior), Isimba</li>
+            <li>Tabataba — 09:00–13:00 — Terry Rhobi (Superlady)</li>
+            <li>The Wire — 13:00–16:00 — Malenga wa Kilimanjaro</li>
+            <li>Ukiwirania — 16:00–20:00 — Lucas Mwikabe (Mzee wa Kijiji)</li>
+            <li>Omogeka — 20:00–00:00 — Lucas Magesa (Chunga Sumacho)</li>
+          </ul>
+          <p><strong>Saturday</strong></p>
+          <ul>
+            <li>Sabato — 05:00–09:00 — Lucas Mwikabe</li>
+            <li>Sauti ya Watoto Wetu — 09:00–12:00 — Terry Rhobi (Superlady)</li>
+          </ul>
+          <p><strong>Sunday</strong> — programming to be confirmed.</p>
+        </div>
+      </noscript>
+    </div>
+  </section>
+
+  <section class="section section--rule" aria-labelledby="notes-title">
+    <div class="container prose-grid">
+      <div>
+        <h2 class="section__title" id="notes-title" data-i18n="schedule.notesTitle">How to read this schedule.</h2>
+        <p data-i18n="schedule.notesBody1">Times are shown in 24-hour East Africa Time (Africa/Nairobi). A programme listed as ending at 00:00 finishes at midnight.</p>
+        <p data-i18n="schedule.notesBody2">Tabataba is hosted by Terry Rhobi, with Johnes Mairari presenting on some occasions. The schedule does not assume that both presenters are on air for every broadcast.</p>
+        <p data-i18n="schedule.notesBody3">The Sunday schedule and any public-holiday changes will be added only after the station confirms them.</p>
+        <a class="link-arrow" href="presenters.html" data-i18n="actions.allPresenters">All presenters</a>
+      </div>
+      <aside class="note-card">
+        <p class="eyebrow" data-i18n="schedule.updateEyebrow">Schedule changes</p>
+        <h3 class="note-card__title" data-i18n="schedule.updateTitle">Has a programme time changed?</h3>
+        <p data-i18n="schedule.updateBody">Send the confirmed change to the station team so the published schedule can be corrected.</p>
+        <a class="btn btn--accent btn--wide" href="contact.html#contact-form" data-i18n="actions.contactStation">Contact the station</a>
+        <p class="note-card__foot" data-i18n="schedule.updateFoot">Programme times remain as published until the station confirms a change.</p>
+      </aside>
+    </div>
+  </section>
+</main>

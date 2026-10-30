@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{DESCRIPTION}}">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0d11">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Radio Togotane 88.3 FM">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta name="twitter:card" content="summary_large_image">
+  {{CANONICAL}}
+  {{OG_URL}}
+  {{OG_IMAGE}}
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/boot.js"></script>
+  {{STRUCTURED_DATA}}
+</head>
+<body class="{{BODY_CLASS}}" data-page="{{PAGE}}">
+  <a class="skip-link" href="#main" data-i18n="common.skip">Skip to content</a>
+  {{HEADER}}
+  {{CONTENT}}
+  {{FOOTER}}
+  {{PLAYER}}
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/i18n.js" defer></script>
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
