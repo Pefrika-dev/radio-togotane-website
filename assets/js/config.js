@@ -29,7 +29,11 @@ window.RT_CONFIG = {
     timezone: 'Africa/Nairobi',
     whatsapp: '254714426619',
     email: 'togotaneradiofm@gmail.com',
-    phones: ['+254701395196', '+254728506650'],
+    // The first two are the station's published contact numbers. The third,
+    // +254757192999, is the line listeners call in on while a programme is
+    // live; the station described it as a voice line only, so it is never
+    // linked as a WhatsApp number.
+    phones: ['+254701395196', '+254728506650', '+254757192999'],
   },
 
   // Official station accounts, as published by the station itself and by the

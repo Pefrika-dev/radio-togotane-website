@@ -3259,6 +3259,23 @@ html[lang='sw'] .hero__alt {
   font-size: 0.74rem;
 }
 
+.footer__credit {
+  margin-left: auto;
+}
+
+.footer__credit a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 0.28em;
+  transition: color 0.2s var(--ease), text-decoration-color 0.2s var(--ease);
+}
+
+.footer__credit a:hover {
+  color: var(--accent-strong);
+  text-decoration-color: currentColor;
+}
+
 /* Player dock */
 .dock {
   position: fixed;
@@ -3724,6 +3741,10 @@ html[lang='sw'] .hero__alt {
 
   .footer__bottom {
     flex-direction: column;
+  }
+
+  .footer__credit {
+    margin-left: 0;
   }
 
   .dock__schedule {

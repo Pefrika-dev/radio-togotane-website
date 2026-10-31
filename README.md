@@ -1,6 +1,6 @@
 # Radio Togotane 88.3 FM — official station website
 
-A complete, dependency-free website for **Radio Togotane 88.3 FM**, Kehancha, Migori County, Kenya. It was built as a design proposal and the station has since approved it as its own site, so the pages speak as Radio Togotane and carry no builder credit. The site is built as static HTML, CSS and vanilla JavaScript, with a bilingual English/Kiswahili interface, a persistent light/dark theme, a published programme schedule, a live player connected to the station's online stream, an automatic listen-back archive of recent broadcast hours, presenter and news layouts, advertising and community-announcement pages, and a contact page. It carries the station's own logo and its verified public channels.
+A complete, dependency-free website for **Radio Togotane 88.3 FM**, Kehancha, Migori County, Kenya. It was built as a design proposal and the station has since approved it as its own site, so the pages speak as Radio Togotane; the only builder attribution is one linked design-and-development credit in the site footer. The site is built as static HTML, CSS and vanilla JavaScript, with a bilingual English/Kiswahili interface, a persistent light/dark theme, a published programme schedule, a live player connected to the station's online stream, an automatic listen-back archive of recent broadcast hours, presenter and news layouts, advertising and community-announcement pages, and a contact page. It carries the station's own logo and its verified public channels.
 
 Everything that was not supplied or publicly published by the station is either omitted or clearly marked as pending. No presenters' biographies, news stories, events, social profiles, audience figures, awards, coverage claims or advertising rates have been invented.
 
@@ -18,7 +18,7 @@ Everything that was not supplied or publicly published by the station is either 
 - **News** — category filters, a featured sample card, sample story cards and an accessible article dialog. Every sample is labelled as a sample.
 - **Advertise** — the twelve advertising services, the four contact routes and a request-quote checklist, without invented prices, reach figures or guarantees.
 - **Announcements** — community categories, a submission form, review and privacy notices, and a clear statement that nothing is published automatically.
-- **Contact** — exact phone, WhatsApp and email details, an international dialling note, a contact form, a card with the station's verified public channels and an honest note about the unpublished studio address.
+- **Contact** — exact phone, on-air call-in, WhatsApp and email details, an international dialling note, a contact form, a card with the station's verified public channels and an honest note about the unpublished studio address.
 - **404** — a branded not-found page served by the preview server.
 
 The site has no database, no analytics, no cookies and no third-party JavaScript.
@@ -161,7 +161,7 @@ Use a direct **HTTPS MP3 or AAC** stream for the widest browser support. An HLS 
 
 ### 4.2 Station details
 
-The same file holds the station name, frequency, town, county, timezone, WhatsApp number, email and phone numbers. The values currently in the file are the exact details supplied by the station. The public pages also contain the clickable phone, WhatsApp and email links, so search for `254714426619`, `togotaneradiofm@gmail.com`, `+254701395196` and `+254728506650` if any of them change.
+The same file holds the station name, frequency, town, county, timezone, WhatsApp number, email and phone numbers. The values currently in the file are the exact details supplied by the station. The public pages also contain the clickable phone, WhatsApp and email links, so search for `254714426619`, `togotaneradiofm@gmail.com`, `+254701395196`, `+254728506650` and `+254757192999` if any of them change. `+254757192999` is the line listeners call in on while a programme is live; it is published as a voice line only, not as a WhatsApp number, because that is all the station has stated.
 
 ### 4.3 Social profiles — verified, pending station confirmation
 
@@ -243,7 +243,7 @@ Replace any of these by dropping in a file of the same name and rebuilding. If t
 
 ## 5. Information still required from the station
 
-The station has adopted the site and publishes it in its own voice, so no approval item is outstanding and no page carries builder credit. What remains are the details still to be supplied:
+The station has adopted the site and publishes it in its own voice, so no approval item is outstanding. The only builder attribution on the public pages is the linked footer credit. What remains are the details still to be supplied:
 
 1. Confirmation that the connected stream feed (`https://stream.zeno.fm/1dahxtvjx47vv`) is the station's authorised address.
 2. Presenter names for the eight Saturday-afternoon and Sunday programmes now listed.
@@ -255,7 +255,7 @@ The station has adopted the site and publishes it in its own voice, so no approv
 8. Final domain name.
 9. The station's own logo files, if the artwork currently taken from its public profile should be replaced with a supplied original.
 10. Permission to publish the photographs already taken from the station's public posts (§4.8).
-11. Confirmed roles or titles for the news team (Weiria Rose, Jomo, Johnes Mairari).
+11. Confirmed roles or titles for the news team (Weiria Rose Jomo, Johnes Mairari).
 12. Permission to make stream recordings available on demand, and a retention period for the archive (see §4.7).
 13. A machine that can run the recorder continuously, or agreement on how the archive will be hosted.
 14. A decision on keeping the station's broadcast source connected to its Zeno mount. The mount was heard to be silent at 09:19 EAT and carrying the live 128 kbps programme at 09:33 EAT the same morning (§4.1); while it is cold, every player on the internet fails identically, including the station's own pages. `node tools/check-stream.js --watch` produces the evidence.
@@ -366,7 +366,7 @@ The local preview server already sends the first four headers. Google Maps is li
 
 ## 8. Known limitations
 
-- **Adopted, but still incomplete** — Radio Togotane approved the site as its own and publishes it in its own voice, so the pages no longer describe themselves as a draft and carry no builder credit. What is still outstanding is content, not permission: the items in §5 remain visibly marked as pending, and nothing has been invented to fill them.
+- **Adopted, but still incomplete** — Radio Togotane approved the site as its own and publishes it in its own voice, so the pages no longer describe themselves as a draft; the only attribution they carry is the linked design-and-development credit in the footer. What is still outstanding is content, not permission: the items in §5 remain visibly marked as pending, and nothing has been invented to fill them.
 - **Stream confirmed, provider not yet approved** — the player carries the station's Zeno.fm feed, which was verified to be live and identify itself as “RADIO TOGOTANE 88.3 FM”. The station still needs to confirm that this is its authorised address; the feed depends on its third-party provider staying active and on the station keeping its own source connected — the same address answered `503 Mount point not active` at 09:19 EAT and streamed the programme at 128 kbps at 09:33 EAT (§4.1). HLS playback in Chrome/Firefox would require an additional library.
 - **Live means the same relay, not sample-exact sync** — every listener is served one continuous stream by the provider, so two phones pressed at the same moment hear the same programme and the same words (§4.1). Each device still buffers and decodes on its own, so playback positions differ by a fraction of a second, and a phone that starts later is further behind until it catches up at the live edge. There is no backend clock that could force two devices to align, and none is claimed.
 - **Archive depends on the recorder** — only hours captured while `tools/record.js` is running appear on the Listen back page. The included archive is one genuine 4 min 09 s demonstration clip, not a complete day; gaps are left as gaps. Continuous capture needs an always-on machine, storage space (about 1.4 GB per day at 128 kbps) and a retention decision.
