@@ -8,6 +8,7 @@
     "start": "node server.js",
     "seo": "node scripts/set-site-url.js",
     "check": "node scripts/check.js",
+    "stream": "node tools/check-stream.js",
     "record": "node tools/record.js"
   },
   "engines": {

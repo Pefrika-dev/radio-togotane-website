@@ -71,7 +71,7 @@ window.RT_I18N = {
     'actions.backHome': "Back to the homepage",
 
     'hero.lead': "Connecting our community through music, news, conversations and entertainment.",
-    'hero.note': "Based on the published schedule. The live player carries the station's online stream.",
+    'hero.note': "Based on the published schedule. The live player carries the station's online feed — the same programme as 88.3 FM, delivered to every listener live.",
     'hero.scheduled': "Scheduled now",
     'hero.placeCounty': "Migori County",
 
@@ -438,7 +438,8 @@ window.RT_I18N = {
     'player.status.loading': "Connecting to the stream…",
     'player.status.live': "Live audio playing",
     'player.status.paused': "Paused — press play to resume",
-    'player.status.error': "Stream unavailable",
+    'player.status.retrying': "Stream off air — auto-reconnecting",
+    'player.status.error': "Stream off air — press play to retry",
     'player.status.unsupported': "This stream format is not supported by your browser",
     'player.playLabel': "Listen live",
     'player.pauseLabel': "Pause live radio",
@@ -581,7 +582,7 @@ window.RT_I18N = {
     'actions.backHome': "Rudi ukurasa wa mwanzo",
 
     'hero.lead': "Tunaunganisha jamii yetu kupitia muziki, habari, mazungumzo na burudani.",
-    'hero.note': "Kulingana na ratiba iliyochapishwa. Kichezaji cha moja kwa moja kinabeba mtandao rasmi wa kituo.",
+    'hero.note': "Kulingana na ratiba iliyochapishwa. Kichezaji cha moja kwa moja kinabeba mtandao rasmi wa kituo — kipindi kilekile cha 88.3 FM, kinachosikilizwa moja kwa moja na kila mtu.",
     'hero.scheduled': "Kipindi cha sasa",
     'hero.placeCounty': "Kaunti ya Migori",
 
@@ -948,7 +949,8 @@ window.RT_I18N = {
     'player.status.loading': "Inaunganisha na mtandao…",
     'player.status.live': "Sauti ya moja kwa moja inacheza",
     'player.status.paused': "Imesimama — bonyeza cheza kuendelea",
-    'player.status.error': "Mtandao haupatikani",
+    'player.status.retrying': "Mtandao umezimwa — tunajaribu tena kiotomatiki",
+    'player.status.error': "Mtandao umezimwa — bonyeza cheza ujaribu tena",
     'player.status.unsupported': "Kivinjari chako hakitumii aina hii ya mtandao",
     'player.playLabel': "Sikiliza moja kwa moja",
     'player.pauseLabel': "Simamisha redio ya moja kwa moja",

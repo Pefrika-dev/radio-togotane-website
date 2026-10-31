@@ -49,6 +49,15 @@ node scripts/check.js   # or: npm run check
 
 `check.js` verifies English/Kiswahili key parity, markup translation keys, dynamic translation keys, page titles/descriptions, a single `h1` per page, duplicate IDs, local link and image targets, form labels, icon-button labels and the station's contact configuration.
 
+Before blaming the website for silence, ask the stream itself:
+
+```sh
+node tools/check-stream.js            # or: npm run stream
+node tools/check-stream.js --watch    # or: npm run stream -- --watch
+```
+
+It reads the one configured `streamUrl`, follows the provider's redirect, samples audio and prints either the stream's own identity or the provider's refusal. Exit code is `0` while audio flows and `1` while it does not, so it can run from a cron job. See [§4.1](#41-live-stream--connected-pending-station-confirmation).
+
 ---
 
 ## 3. File structure
@@ -62,6 +71,7 @@ radio-togotane/
 │  ├─ check.js               # build/output consistency checks
 │  └─ set-site-url.js        # writes site.json from a URL argument
 ├─ tools/
+│  ├─ check-stream.js        # asks the provider whether the mount carries audio
 │  └─ record.js              # continuous stream recorder for listen-back
 ├─ src/
 │  ├─ layout.html            # shared page shell
@@ -129,9 +139,19 @@ Verified on 2026-10-30:
 - a downloaded sample decodes as MPEG layer III, 128 kbps, 44.1 kHz stereo;
 - in a real browser, clicking “Listen live” issues the media request, receives `200 audio/mpeg`, and the player reaches its live state and stays there.
 
-**Still to confirm with the station:** that this Zeno feed is the authorised address. If the station or its provider issues a different URL, replace the value above and rebuild — nothing else needs to change. The feed sits on a third-party provider, so if the station stops paying for or maintaining the Zeno account, the stream will go offline; the player will then show an unavailable state rather than pretend to play.
+**Still to confirm with the station:** that this Zeno feed is the authorised address. If the station or its provider issues a different URL, replace the value above and rebuild — nothing else needs to change. The feed sits on a third-party provider, so if the station stops paying for or maintaining the Zeno account, the stream will go offline; the player will then show an off-air state rather than pretend to play.
 
-Re-checked on 2026-10-31: the address answered `302` and the Zeno edge returned `503 Service Unavailable` with an empty body — the station's own broadcast source was not feeding the mount at that moment. The player read “Stream unavailable” / “Mtandao haupatikani”, kept its paused/idle styling and never entered a playing state. Because a refused or offline source arrives as the same media error as an unsupported codec, the player now reports it as an unavailable stream; the “this stream format is not supported by your browser” wording is reserved for browsers that cannot decode MP3 at all.
+**The mount follows the station's own source, and goes quiet when they do.** Re-checked on the morning of 2026-10-31: at 09:19 EAT the address answered `302` and the Zeno edge returned `503 Service Unavailable` with the body `Mount point not active, try again later.` — the station was not feeding its mount, so no listener anywhere could hear it, including the station's own Zeno page and its `radio-togotane-88-3-fm.mdn.live` site, which publish this same single address. Fourteen minutes later, at 09:33 EAT, the identical check answered `ON AIR · audio/mpeg · "RADIO TOGOTANE 88.3 FM" · 128 kbps`, and the website player streamed it. This is a source-side condition the station controls; there is no website setting that can make a cold mount answer.
+
+Two things follow from that, and both are implemented:
+
+- `node tools/check-stream.js` (also `npm run stream`) reads the same configured address, follows the provider's redirect, samples audio and prints the provider's own words when the mount is cold, with exit code `0` on air and `1` off air. `--watch`, optionally `--every 15`, logs each state change, so an hour of evidence costs one command.
+- The player treats a failed attempt as a question, not a verdict. It re-attempts on its own with a growing pause — about 1.1 s, 3 s, 8 s, 15 s, then 30 s twice — because a mount that is starting up often refuses the first listener and serves audio to the next. After that ladder (roughly a minute and a half) it stops and says so plainly, rather than pretending to connect forever. Each attempt carries its own query value, which Zeno ignores, so an attempt really re-contacts the provider instead of replaying the browser's cached refusal. Pressing the control while connecting cancels the attempt and returns the status to “Ready”, without a stale error arriving afterwards.
+- A feed that stops *after* it started is caught too. Chrome leaves a dead live connection sitting in its buffer without ever reporting an error, so the player watches its own progress: if the audio position has not moved for twelve seconds while it is supposed to be live, it drops that connection and rejoins through the same ladder. A listener whose phone walked out of range, or whose station's source blinked, comes back to the live edge without pressing anything.
+
+Because a refused or offline source reaches the browser as the same media error as a codec the browser cannot decode, the states are worded apart: “Stream off air — auto-reconnecting” while the ladder is still running, “Stream off air — press play to retry” once it has stopped, and the “your browser does not support this stream format” wording is reserved for browsers that genuinely cannot decode MP3.
+
+**What “live” means here.** The station's mount is a single relay of the same broadcast that goes out over 88.3 FM, and every listener is served that one feed: two connections opened at the same moment received byte-identical audio (`icy-name: RADIO TOGOTANE 88.3 FM`, 128 kbps). Each device still buffers a second or two of its own, so two phones are close together rather than sample-exact, and any internet relay sits a little behind the transmitter. The site narrows that gap by always joining the live edge — it never plays a stored file and never rewinds to catch up — but closing the remaining seconds would need a synchronised clock on a backend, which this dependency-free proposal does not have and does not claim.
 
 The player never autoplays: `new Audio()` is created only when a play control is pressed, and playback is driven by real audio events. With an empty `streamUrl` the controls open the pending dialog instead, the status reads “Stream not connected”, and no audio element is created.
 
@@ -237,6 +257,7 @@ These items are visibly marked as pending in the proposal and are not invented:
 12. Permission to make stream recordings available on demand, and a retention period for the archive (see §4.7).
 13. A machine that can run the recorder continuously, or agreement on how the archive will be hosted.
 14. The station's approval of this proposal as its official website. Until then the footer states that publication awaits station approval.
+15. A decision on keeping the station's broadcast source connected to its Zeno mount. The mount was heard to be silent at 09:19 EAT and carrying the live 128 kbps programme at 09:33 EAT the same morning (§4.1); while it is cold, every player on the internet fails identically, including the station's own pages. `node tools/check-stream.js --watch` produces the evidence.
 
 The “Johnes Mairari may present Tabataba on some occasions” detail is stated as a possibility, not as a fixed pairing with Terry Rhobi.
 
@@ -292,9 +313,9 @@ The local preview server already sends the first four headers. Google Maps is li
 
 ## 7. Tests performed
 
-- `node build.js` — 10 pages built (9 public pages plus 404); sitemap skipped while `siteUrl` is empty.
-- `node scripts/check.js` — PASS: 401 markup keys, 56 dynamic keys, 10 built pages, 486 strings per language, no broken local links or missing labels.
-- `node --check` — `app.js`, `i18n.js`, `config.js`, `data.js`, `server.js`, `tools/record.js`.
+- `node build.js` — 10 pages built (9 public pages plus 404) and `sitemap.xml` regenerated with 9 entries for the configured Pages address.
+- `node scripts/check.js` — PASS: 401 markup keys, 56 dynamic keys, 10 built pages, 486 strings per language, no broken local links or missing labels, and every built page present in the player's in-page navigation list (a page it does not know would silently stop the stream).
+- `node --check` — `app.js`, `i18n.js`, `config.js`, `data.js`, `server.js`, `tools/record.js`, `tools/check-stream.js`.
 - Browser testing at 390 px and 539 px mobile viewports and a 1440 px desktop capture:
   - no horizontal overflow on any of the ten pages at mobile width, or in a 1440 px-wide desktop frame;
   - all local image references resolve and load; below-the-fold photographs use native lazy loading;
@@ -316,6 +337,14 @@ The local preview server already sends the first four headers. Google Maps is li
   - after a swap the page controls bind exactly once — podcast filters, presenter filters, schedule tabs, the news article dialog (opens and closes on one click each), the in-page “Listen live” buttons and the contact form (a valid submit opened exactly one WhatsApp handoff, not two);
   - browser Back restores the previous page without reloading the document or interrupting audio; `#anchor` links on the current page, `target="_blank"` channel links, off-site links, downloaded files and modifier/right-click requests all keep native browser behaviour;
   - Kiswahili applies to swapped-in content (Advertise heading, the player status and the footer navigation rendered in Swahili after the switch), and the theme and language choices still persist across a real reload;
+  - **the station's own audio, live** — on 2026-10-31 at 09:33 EAT the configured mount was carrying the broadcast, and the player streamed it for 46 seconds continuously while swapping Home → Presenters → Listen back → News → Home: one media element, its position advancing every second, no pause or error event on the element;
+  - **stream health tool** — `node tools/check-stream.js` printed `OFF AIR HTTP 503 from stream-287.surfernetwork.com · Mount point not active, try again later.` (exit 1) at 09:19 EAT and `ON AIR audio/mpeg · “RADIO TOGOTANE 88.3 FM” · 128 kbps · 48,902 bytes in 2.6 s` (exit 0) at 09:33 EAT; pointed at a local MP3 it also reports ON AIR, so the passing path is tested too, not only the failure;
+  - **a cold mount gets its second attempt** — with the first request answered `503` and the second served real audio, the player retried on its own 1.1 s later and reached “Live audio playing”, the dock stayed playing and the pause control then stopped it;
+  - **a feed that dies mid-programme is recovered** — against a test server streaming real MP3 frames at 128 kbps, playback reached “Live audio playing”, the server then stopped feeding the already-open connection and the browser never reported an error: the progress watchdog reconnected on its own, moved the status to “Stream off air — auto-reconnecting”, worked through the backoff ladder, and when the server resumed about 40 seconds later the player returned to “Live audio playing” and its position advanced again — with no one pressing anything;
+  - **two listeners, one broadcast** — on 2026-10-31, minutes after the 10:11 EAT ON AIR check, two connections opened at the same moment against the station's live mount each received 260,855 bytes of `icy-name: RADIO TOGOTANE 88.3 FM` at 128 kbps, and the second connection's first audio frame was located 64 bytes into the first — 0 ms of skew, one byte-identical relay rather than a per-listener copy. Two browser tabs of the site opened side by side both reached “Live audio playing” and advanced one second per second together (25.5 s and 21.8 s at the same instant, t+24); the 3.7 s gap is the 2 s by which the second tab was started plus its own buffering, and §8 states plainly that devices are close together rather than sample-exact;
+  - **every press really re-contacts the provider** — four presses against the live mount each produced fresh requests with distinct `_r=` query values (an attempt and its automatic retry). Before that value existed, a second press three seconds later produced zero network requests: the browser replayed its cached refusal while the status text invited a retry;
+  - **cancelling while connecting is clean** — pressing the control during “Connecting to the stream…” aborts the attempt and returns the status to “Ready — press play to listen”, and the retired element's later error cannot overwrite the state the listener chose;
+  - **off-air wording fits a phone** — “Stream off air — press play to retry” and “Mtandao umezimwa — bonyeza cheza ujaribu tena” both wrap inside the fixed dock at exactly 390 px with `scrollWidth` equal to `clientWidth` (390 = 390) and no clipped text; the Swahili string had pushed the dock to 502 px, which is why `.dock__status` is now allowed to shrink. The automatic-reconnecting wording was measured the same way against a live test feed at 390 px in both languages: “Stream off air — auto-reconnecting” and “Mtandao umezimwa — tunajaribu tena kiotomatiki” each fit in three wrapped lines with the dock still 390/390 and `textClipped: false`; the first Swahili draft (“tunajiunganisha tena kiotomatiki”) needed five lines and was shortened;
   - a missing manifest shows the error state, and an empty manifest shows “No recordings yet” with filters hidden and play disabled — no invented episodes;
   - the archive page has no horizontal overflow at 390 px, and the player is placed above the list on mobile;
   - presenter filters return the correct weekday/Saturday presenters;
@@ -327,14 +356,15 @@ The local preview server already sends the first four headers. Google Maps is li
   - the Lucas Magesa presenter card shows the station-published portrait with its credit line, while every other card keeps a monogram and a pending note;
   - the About “From the studio” photograph loads lazily, carries a translated alt string and a “Station photograph” caption;
   - 404 page renders with navigation and footer.
-- SEO test with a temporary `https://example.com` produced canonical tags, Open Graph URLs and a 9-page sitemap; the value was then reset to empty so the proposal does not claim a domain. `podcast.xml` is only written by the recorder once a real URL is set.
+- SEO with the Pages address configured: canonical tags, Open Graph URLs and a 9-page `sitemap.xml` are written on every build. `podcast.xml` is only written by the recorder, and only while a real URL is set.
 
 ---
 
 ## 8. Known limitations
 
 - **A proposal, not a published station site** — this website carries the station's real identity, but Radio Togotane has not approved or commissioned it. The footer says publication awaits station approval, and nothing on the site claims to speak for the station.
-- **Stream confirmed, provider not yet approved** — the player carries the station's Zeno.fm feed, which was verified to be live and identify itself as “RADIO TOGOTANE 88.3 FM”. The station still needs to confirm that this is its authorised address; the feed depends on its third-party provider staying active. HLS playback in Chrome/Firefox would require an additional library.
+- **Stream confirmed, provider not yet approved** — the player carries the station's Zeno.fm feed, which was verified to be live and identify itself as “RADIO TOGOTANE 88.3 FM”. The station still needs to confirm that this is its authorised address; the feed depends on its third-party provider staying active and on the station keeping its own source connected — the same address answered `503 Mount point not active` at 09:19 EAT and streamed the programme at 128 kbps at 09:33 EAT (§4.1). HLS playback in Chrome/Firefox would require an additional library.
+- **Live means the same relay, not sample-exact sync** — every listener is served one continuous stream by the provider, so two phones pressed at the same moment hear the same programme and the same words (§4.1). Each device still buffers and decodes on its own, so playback positions differ by a fraction of a second, and a phone that starts later is further behind until it catches up at the live edge. There is no backend clock that could force two devices to align, and none is claimed.
 - **Archive depends on the recorder** — only hours captured while `tools/record.js` is running appear on the Listen back page. The included archive is one genuine 4 min 09 s demonstration clip, not a complete day; gaps are left as gaps. Continuous capture needs an always-on machine, storage space (about 1.4 GB per day at 128 kbps) and a retention decision.
 - **Recording rights unconfirmed** — on-demand recordings of a live stream can include music and advertising licensed only for broadcast. The station must confirm the right to publish them before the archive goes public.
 - **No backend** — forms hand off to WhatsApp or email; the website does not store or deliver submissions itself.

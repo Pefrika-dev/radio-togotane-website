@@ -3375,7 +3375,10 @@ html[lang='sw'] .hero__alt {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.15rem;
-  flex: none;
+  /* Kiswahili status strings are longer than English, so the dock must be able
+     to shrink this block and wrap the text instead of overflowing the viewport. */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .dock__aside {

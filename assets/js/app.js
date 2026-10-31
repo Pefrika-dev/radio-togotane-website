@@ -483,7 +483,7 @@
   /* Live player ---------------------------------------------------------- */
 
   const streamUrl = String(config.streamUrl || '').trim();
-  const player = { audio: null, state: 'idle', url: streamUrl };
+  const player = { audio: null, state: 'idle', url: streamUrl, lastPosition: -1, lastProgress: 0 };
 
   // The station broadcasts MP3. Only a browser that cannot decode MP3 at all
   // may honestly be told the format is unsupported; a refused or offline
@@ -491,8 +491,84 @@
   // listener's fault, so it is reported as an unavailable stream instead.
   const playerSupportsMp3 = doc.createElement('audio').canPlayType('audio/mpeg') !== '';
 
+  // A live mount can refuse one listener, answer the next, or stop feeding a
+  // connection that is already open. The player therefore re-attempts on its own
+  // with a growing pause, and stops after about a minute and a half so the
+  // status can say “off air” honestly instead of pretending to connect forever.
+  const LIVE_RETRY_STEPS = [1100, 3000, 8000, 15000, 30000, 30000];
+  const LIVE_STALL_MS = 12000;
+  let retryTimer = null;
+  let retriesDone = 0;
+
+  function clearRetry() {
+    if (retryTimer !== null) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+  }
+
+  // A failed media request is remembered against its address, so a later attempt
+  // would replay the cached refusal instead of asking the station again. Each
+  // attempt gets its own query value, which Zeno ignores, so the mount is really
+  // contacted again — and every listener is served what the mount holds now.
+  function attemptUrl() {
+    return player.url + (player.url.indexOf('?') === -1 ? '?' : '&') + '_r=' + Date.now();
+  }
+
+  // An element that failed, stalled or was cancelled will not fetch again and
+  // must stop speaking for the player, so it is marked retired and dropped.
+  function discardPlayerAudio() {
+    if (!player.audio) return;
+    player.audio.__retired = true;
+    player.audio.pause();
+    player.audio.removeAttribute('src');
+    player.audio.load();
+    player.audio = null;
+  }
+
   function failPlayback() {
-    setPlayerState(playerSupportsMp3 ? 'error' : 'unsupported', t('player.announceError'));
+    discardPlayerAudio();
+
+    if (!playerSupportsMp3) {
+      setPlayerState('unsupported', t('player.announceError'));
+      return;
+    }
+
+    if (retriesDone < LIVE_RETRY_STEPS.length) {
+      const delay = LIVE_RETRY_STEPS[retriesDone];
+      retriesDone += 1;
+      // The first recovery attempt is quick, so the listener still sees a
+      // connection being made. From the second onward the status says plainly
+      // that the station is silent and that the player keeps trying.
+      setPlayerState(retriesDone === 1 ? 'loading' : 'retrying');
+      clearRetry();
+      retryTimer = setTimeout(function () {
+        retryTimer = null;
+        startPlayback(true);
+      }, delay);
+      return;
+    }
+
+    setPlayerState('error', t('player.announceError'));
+  }
+
+  // A dead live connection can sit in the buffer with the browser never
+  // reporting an error, so progress itself is watched: a player that has not
+  // moved for twelve seconds reconnects instead of waiting for the listener.
+  function watchLiveProgress() {
+    if (!player.audio || player.audio.__retired) return;
+    if (player.state !== 'live' && player.state !== 'loading') return;
+
+    const now = Date.now();
+    if (player.audio.currentTime !== player.lastPosition) {
+      player.lastPosition = player.audio.currentTime;
+      player.lastProgress = now;
+      return;
+    }
+    if (player.lastProgress && now - player.lastProgress > LIVE_STALL_MS) {
+      player.lastProgress = 0;
+      failPlayback();
+    }
   }
 
   function setPlayerState(state, announcement) {
@@ -503,14 +579,15 @@
       loading: t('player.status.loading'),
       live: t('player.status.live'),
       paused: t('player.status.paused'),
+      retrying: t('player.status.retrying'),
       error: t('player.status.error'),
       unsupported: t('player.status.unsupported'),
     };
 
     $$('#hero-status, #player-status').forEach(function (el) {
       el.classList.toggle('is-live', state === 'live');
-      el.classList.toggle('is-loading', state === 'loading');
-      el.classList.toggle('is-error', state === 'error' || state === 'unsupported');
+      el.classList.toggle('is-loading', state === 'loading' || state === 'retrying');
+      el.classList.toggle('is-error', state === 'error' || state === 'unsupported' || state === 'retrying');
     });
 
     $$('[data-player-status-text], #player-status-text').forEach(function (el) {
@@ -520,7 +597,7 @@
     const dock = $('#player-dock');
     if (dock) {
       dock.classList.toggle('is-playing', state === 'live');
-      dock.classList.toggle('is-loading', state === 'loading');
+      dock.classList.toggle('is-loading', state === 'loading' || state === 'retrying');
     }
 
     const playButton = $('.dock__play');
@@ -543,33 +620,48 @@
     return saved;
   }
 
-  function startPlayback() {
+  function startPlayback(isRetry) {
     if (!player.url) {
       openStreamDialog();
       return;
     }
 
+    if (!isRetry) {
+      clearRetry();
+      retriesDone = 0;
+    }
+
+    player.lastPosition = -1;
+    player.lastProgress = Date.now();
+
     if (!player.audio) {
       const audio = new Audio();
       audio.preload = 'none';
-      audio.src = player.url;
+      audio.src = attemptUrl();
       audio.volume = getVolume();
 
       audio.addEventListener('playing', function () {
+        if (audio.__retired) return;
+        clearRetry();
+        retriesDone = 0;
         setPlayerState('live', t('player.announceLive'));
       });
       audio.addEventListener('waiting', function () {
+        if (audio.__retired) return;
         setPlayerState('loading');
       });
       audio.addEventListener('stalled', function () {
+        if (audio.__retired) return;
         setPlayerState('loading');
       });
       audio.addEventListener('pause', function () {
+        if (audio.__retired) return;
         if (player.state === 'live' || player.state === 'loading') {
           setPlayerState('paused', t('player.announcePaused'));
         }
       });
       audio.addEventListener('error', function () {
+        if (audio.__retired) return;
         failPlayback();
       });
 
@@ -580,9 +672,11 @@
     if (archive.audio && !archive.audio.paused) archive.audio.pause();
 
     setPlayerState('loading');
-    const result = player.audio.play();
+    const element = player.audio;
+    const result = element.play();
     if (result && typeof result.catch === 'function') {
       result.catch(function (error) {
+        if (element.__retired) return;
         if (error && error.name === 'AbortError') {
           setPlayerState('idle');
         } else if (error && error.name === 'NotAllowedError') {
@@ -602,7 +696,18 @@
       return;
     }
     if (player.state === 'loading' || (player.audio && !player.audio.paused)) {
-      if (player.audio) player.audio.pause();
+      // Stopping during the retry gap must cancel the pending attempt too.
+      clearRetry();
+      retriesDone = 0;
+      if (player.state === 'loading') {
+        // Nothing was ever heard, so the attempt is dropped rather than paused:
+        // the control goes back to Ready, not to a Paused state that would
+        // promise audio that never arrived.
+        discardPlayerAudio();
+        setPlayerState('idle');
+      } else {
+        player.audio.pause();
+      }
       return;
     }
     startPlayback();
@@ -631,6 +736,8 @@
     $$('#player-dock .js-play, #nav-dialog .js-play, .header__listen').forEach(function (button) {
       button.addEventListener('click', togglePlayback);
     });
+
+    if (player.url) window.setInterval(watchLiveProgress, 5000);
 
     setPlayerState('idle');
   }
