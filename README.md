@@ -23,6 +23,8 @@ Everything that was not supplied or publicly published by the station is either 
 
 The site has no database, no analytics, no cookies and no third-party JavaScript.
 
+Listening is continuous. The player dock sits outside the page content, so moving between pages does not stop the stream or a listen-back clip — the site fetches the next page, replaces only `<main>` and updates the address, title, description, navigation state and language in place. Only one sound plays at a time: starting the live stream pauses an archive clip, and starting a clip pauses the live stream. If the browser cannot fetch or parse the next page, or anything about it is unexpected, the link performs a normal page load instead, so navigation is never left half-done.
+
 ---
 
 ## 2. Quick start
@@ -128,6 +130,8 @@ Verified on 2026-10-30:
 - in a real browser, clicking “Listen live” issues the media request, receives `200 audio/mpeg`, and the player reaches its live state and stays there.
 
 **Still to confirm with the station:** that this Zeno feed is the authorised address. If the station or its provider issues a different URL, replace the value above and rebuild — nothing else needs to change. The feed sits on a third-party provider, so if the station stops paying for or maintaining the Zeno account, the stream will go offline; the player will then show an unavailable state rather than pretend to play.
+
+Re-checked on 2026-10-31: the address answered `302` and the Zeno edge returned `503 Service Unavailable` with an empty body — the station's own broadcast source was not feeding the mount at that moment. The player read “Stream unavailable” / “Mtandao haupatikani”, kept its paused/idle styling and never entered a playing state. Because a refused or offline source arrives as the same media error as an unsupported codec, the player now reports it as an unavailable stream; the “this stream format is not supported by your browser” wording is reserved for browsers that cannot decode MP3 at all.
 
 The player never autoplays: `new Audio()` is created only when a play control is pressed, and playback is driven by real audio events. With an empty `streamUrl` the controls open the pending dialog instead, the status reads “Stream not connected”, and no audio element is created.
 
@@ -306,6 +310,12 @@ The local preview server already sends the first four headers. Google Maps is li
   - the Listen back page lists that recording, shows its programme, time, presenters and duration, offers programme filters with counts and pre-selects the newest item without creating an audio element or making a media request;
   - pressing play on the archive requests the MP3 (`206 Partial Content`, `audio/mpeg`), advances the progress and clock, pauses and resumes, and seeks to 2:06;
   - playback survives an EN/SW switch and a theme change, with the layout intact;
+  - **continuous listening across pages** — with the live player playing, clicking Home → About → Presenters → Listen back kept the status at “Live audio playing” with the dock still marked as playing, while the address, `data-page`, body class, `<main>` content, navigation `aria-current` and the description/Open Graph/canonical values all changed; a value written to `window` before the click was still there afterwards, which proves the document never reloaded;
+  - **one sound at a time** — starting an archive clip moved the live player to “Paused — press play to resume” and the clip to “Playing recording”; pressing play in the dock returned the live player to “Live audio playing” and the clip to “Paused”;
+  - the clip's clock ran on across the swap: 0:05 when it started, 0:12 after the visitor had walked to Contact and back, and the list re-selected the same episode with its filter chips intact;
+  - after a swap the page controls bind exactly once — podcast filters, presenter filters, schedule tabs, the news article dialog (opens and closes on one click each), the in-page “Listen live” buttons and the contact form (a valid submit opened exactly one WhatsApp handoff, not two);
+  - browser Back restores the previous page without reloading the document or interrupting audio; `#anchor` links on the current page, `target="_blank"` channel links, off-site links, downloaded files and modifier/right-click requests all keep native browser behaviour;
+  - Kiswahili applies to swapped-in content (Advertise heading, the player status and the footer navigation rendered in Swahili after the switch), and the theme and language choices still persist across a real reload;
   - a missing manifest shows the error state, and an empty manifest shows “No recordings yet” with filters hidden and play disabled — no invented episodes;
   - the archive page has no horizontal overflow at 390 px, and the player is placed above the list on mobile;
   - presenter filters return the correct weekday/Saturday presenters;
@@ -328,6 +338,7 @@ The local preview server already sends the first four headers. Google Maps is li
 - **Archive depends on the recorder** — only hours captured while `tools/record.js` is running appear on the Listen back page. The included archive is one genuine 4 min 09 s demonstration clip, not a complete day; gaps are left as gaps. Continuous capture needs an always-on machine, storage space (about 1.4 GB per day at 128 kbps) and a retention decision.
 - **Recording rights unconfirmed** — on-demand recordings of a live stream can include music and advertising licensed only for broadcast. The station must confirm the right to publish them before the archive goes public.
 - **No backend** — forms hand off to WhatsApp or email; the website does not store or deliver submissions itself.
+- **Continuous listening needs JavaScript** — pages are swapped in place only when the browser supports `fetch`, the History API and `DOMParser`; every other visitor gets ordinary page loads, and in that case the stream restarts when the page changes. There is no service worker keeping audio alive across a hard reload, and adding one is a deliberate next step rather than an assumption. The JSON-LD block belongs to the page first loaded, so a crawler or a manually reloaded page always reads the server-rendered file for that URL.
 - **Sample content** — news stories are layout samples, clearly labelled. Events are empty until confirmed.
 - **Presenter images and bios** — one portrait (Lucas Magesa) comes from the station's own public post; the other six cards keep neutral monograms and pending notes, and no biography has been written for anyone. No real presenter photograph or biography was invented.
 - **Public channels** — Facebook, YouTube and X were verified against the station's own publications and a public radio directory, but the station has not yet confirmed them for this site, and no official Instagram or TikTok account could be found.

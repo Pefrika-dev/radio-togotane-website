@@ -284,16 +284,9 @@
   }
 
   function initDialogs() {
-    $$('[data-close-dialog], #menu-close').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        closeDialog(btn.closest('dialog'));
-      });
-    });
-
-    $$('dialog').forEach(function (dialog) {
-      dialog.addEventListener('click', function (event) {
-        if (event.target === dialog) closeDialog(dialog);
-      });
+    ['#nav-dialog', '#stream-dialog'].forEach(function (selector) {
+      const dialog = $(selector);
+      if (dialog) bindDialog(dialog);
     });
 
     const menuOpen = $('#menu-open');
@@ -303,6 +296,23 @@
         openDialog(navDialog);
       });
     }
+  }
+
+  function bindDialog(dialog) {
+    $$('[data-close-dialog], #menu-close', dialog).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        closeDialog(dialog);
+      });
+    });
+
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) closeDialog(dialog);
+    });
+  }
+
+  /* Dialogs inside a page are rebound whenever content is swapped. */
+  function bindDialogControls(scope) {
+    $$('dialog', scope).forEach(bindDialog);
   }
 
   /* Schedule ------------------------------------------------------------- */
@@ -436,8 +446,8 @@
     }
   }
 
-  function initTabs() {
-    $$('.tabs').forEach(function (tabs) {
+  function initTabs(scope) {
+    $$('.tabs', scope).forEach(function (tabs) {
       const buttons = $$('.tab', tabs);
 
       function activate(button, focus) {
@@ -474,6 +484,16 @@
 
   const streamUrl = String(config.streamUrl || '').trim();
   const player = { audio: null, state: 'idle', url: streamUrl };
+
+  // The station broadcasts MP3. Only a browser that cannot decode MP3 at all
+  // may honestly be told the format is unsupported; a refused or offline
+  // source reaches the player as the same media error and is not the
+  // listener's fault, so it is reported as an unavailable stream instead.
+  const playerSupportsMp3 = doc.createElement('audio').canPlayType('audio/mpeg') !== '';
+
+  function failPlayback() {
+    setPlayerState(playerSupportsMp3 ? 'error' : 'unsupported', t('player.announceError'));
+  }
 
   function setPlayerState(state, announcement) {
     player.state = state;
@@ -550,12 +570,14 @@
         }
       });
       audio.addEventListener('error', function () {
-        const code = audio.error ? audio.error.code : 0;
-        setPlayerState(code === 4 ? 'unsupported' : 'error', t('player.announceError'));
+        failPlayback();
       });
 
       player.audio = audio;
     }
+
+    // Only one sound at a time: live audio takes over from an archive clip.
+    if (archive.audio && !archive.audio.paused) archive.audio.pause();
 
     setPlayerState('loading');
     const result = player.audio.play();
@@ -566,7 +588,7 @@
         } else if (error && error.name === 'NotAllowedError') {
           setPlayerState('paused', t('player.announcePaused'));
         } else if (error && error.name === 'NotSupportedError') {
-          setPlayerState('unsupported', t('player.announceError'));
+          failPlayback();
         } else {
           setPlayerState('error', t('player.announceError'));
         }
@@ -606,11 +628,18 @@
       });
     }
 
-    $$('.js-play').forEach(function (button) {
+    $$('#player-dock .js-play, #nav-dialog .js-play, .header__listen').forEach(function (button) {
       button.addEventListener('click', togglePlayback);
     });
 
     setPlayerState('idle');
+  }
+
+  /* Play buttons that live inside a page are rebound whenever content is swapped. */
+  function bindPlayButtons(scope) {
+    $$('.js-play', scope).forEach(function (button) {
+      button.addEventListener('click', togglePlayback);
+    });
   }
 
   /* Listen-back archive -------------------------------------------------- */
@@ -922,7 +951,7 @@
       if (archive.state !== 'error') setArchiveStatus('loading');
     });
     audio.addEventListener('pause', function () {
-      if (archive.state === 'playing') setArchiveStatus('paused');
+      if (archive.state === 'playing' || archive.state === 'loading') setArchiveStatus('paused');
     });
     audio.addEventListener('ended', function () {
       setArchiveStatus('ended');
@@ -966,6 +995,8 @@
 
   function playArchive() {
     const audio = archiveAudio();
+    // Only one sound at a time: an archive clip takes over from live audio.
+    if (player.audio && !player.audio.paused) player.audio.pause();
     if (archive.state === 'ended') audio.currentTime = 0;
     setArchiveStatus('loading');
 
@@ -1071,13 +1102,13 @@
       });
   }
 
-  function initPodcasts() {
-    if (!$('[data-archive-player]')) return;
+  function initPodcasts(scope) {
+    if (!$('[data-archive-player]', scope)) return;
 
-    const play = $('[data-archive-play]');
+    const play = $('[data-archive-play]', scope);
     if (play) play.addEventListener('click', toggleArchive);
 
-    const list = $('[data-episode-list]');
+    const list = $('[data-episode-list]', scope);
     if (list) {
       list.addEventListener('click', function (event) {
         const button = event.target.closest ? event.target.closest('.episode__button') : null;
@@ -1086,7 +1117,7 @@
       });
     }
 
-    const seek = $('[data-archive-seek]');
+    const seek = $('[data-archive-seek]', scope);
     if (seek) {
       seek.addEventListener('input', function () {
         const audio = archive.audio;
@@ -1098,25 +1129,32 @@
       });
     }
 
-    const refresh = $('[data-podcast-refresh]');
+    const refresh = $('[data-podcast-refresh]', scope);
     if (refresh) {
       refresh.addEventListener('click', function () {
         refresh.disabled = true;
+        archive.ready = false;
         loadPodcastManifest().then(function () {
           refresh.disabled = false;
         });
       });
     }
 
+    // The episode list is fetched once and kept in memory, so returning to the
+    // page while a recording plays restores it without a second request.
+    if (archive.ready || archive.failed) {
+      refreshPodcasts();
+      return;
+    }
     refreshPodcasts();
     loadPodcastManifest();
   }
 
   /* Presenters and news filters ------------------------------------------ */
 
-  function initPresenters() {
-    const filters = $('[data-presenter-filters]');
-    const grid = $('[data-presenter-grid]');
+  function initPresenters(scope) {
+    const filters = $('[data-presenter-filters]', scope);
+    const grid = $('[data-presenter-grid]', scope);
     if (!filters || !grid) return;
 
     const buttons = $$('.chip', filters);
@@ -1146,14 +1184,14 @@
     }
   }
 
-  function initNews() {
-    const filters = $('[data-news-filters]');
-    const grid = $('[data-news-grid]');
+  function initNews(scope) {
+    const filters = $('[data-news-filters]', scope);
+    const grid = $('[data-news-grid]', scope);
     if (!filters || !grid) return;
 
     const buttons = $$('.chip', filters);
     const cards = $$('.news-card', grid);
-    const empty = $('[data-news-empty]');
+    const empty = $('[data-news-empty]', scope);
 
     function apply(filter) {
       let visible = 0;
@@ -1201,8 +1239,8 @@
     }
   }
 
-  function initArticle() {
-    $$('[data-article]').forEach(function (button) {
+  function initArticle(scope) {
+    $$('[data-article]', scope).forEach(function (button) {
       button.addEventListener('click', function () {
         currentArticle = {
           titleKey: button.getAttribute('data-title-key'),
@@ -1370,8 +1408,8 @@
     });
   }
 
-  function initForms() {
-    $$('form[data-form]').forEach(function (form) {
+  function initForms(scope) {
+    $$('form[data-form]', scope).forEach(function (form) {
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         submitForm(form, 'whatsapp');
@@ -1452,8 +1490,8 @@
     copyLink(url, report);
   }
 
-  function initShare() {
-    $$('.js-share').forEach(function (button) {
+  function initShare(scope) {
+    $$('.js-share', scope).forEach(function (button) {
       button.addEventListener('click', shareSite);
     });
   }
@@ -1596,6 +1634,141 @@
     });
   }
 
+  /* Page routing --------------------------------------------------------- */
+
+  /*
+   * Both the live stream and an archive clip are Audio objects owned by this
+   * script, not elements inside the page, so a normal page reload is what
+   * silences the listener. Clicking a link therefore replaces only <main> and
+   * leaves the header, footer, player dock and the playing audio untouched.
+   * Any page the browser cannot fetch or parse the way it expects falls back
+   * to an ordinary navigation, so nothing is ever left half-loaded.
+   */
+
+  const DIRECTORY = window.location.pathname.replace(/[^/]*$/, '');
+  const PAGE_NAMES = ['about', 'programs', 'podcasts', 'presenters', 'news', 'advertise', 'announce', 'contact'];
+  const canRoute = Boolean(window.fetch && window.history && window.history.pushState && window.DOMParser);
+
+  let currentPage = '';
+  let routeAbort = null;
+
+  function pageForPathname(pathname) {
+    if (pathname === DIRECTORY || pathname === DIRECTORY + 'index.html') return 'home';
+    for (let index = 0; index < PAGE_NAMES.length; index++) {
+      if (pathname === DIRECTORY + PAGE_NAMES[index] + '.html') return PAGE_NAMES[index];
+    }
+    return '';
+  }
+
+  function copyMeta(parsed, selector, attribute) {
+    const source = parsed.querySelector(selector);
+    const target = doc.querySelector(selector);
+    if (!source || !target) return;
+    const value = source.getAttribute(attribute);
+    if (value !== null) target.setAttribute(attribute, value);
+  }
+
+  function swapContent(parsed, page) {
+    const nextMain = parsed.querySelector('main');
+    const currentMain = $('main');
+    if (!nextMain || !currentMain) return false;
+
+    currentMain.replaceWith(doc.adoptNode(nextMain));
+    currentPage = page;
+
+    doc.body.className = parsed.body.className;
+    doc.body.setAttribute('data-page', page);
+    copyMeta(parsed, 'meta[name="description"]', 'content');
+    copyMeta(parsed, 'meta[property="og:title"]', 'content');
+    copyMeta(parsed, 'meta[property="og:description"]', 'content');
+    copyMeta(parsed, 'meta[property="og:url"]', 'content');
+    copyMeta(parsed, 'link[rel="canonical"]', 'href');
+
+    $$('[data-nav]').forEach(function (link) {
+      if (link.getAttribute('data-nav') === page) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    return true;
+  }
+
+  function landOnPage(hash) {
+    if (hash && hash.length > 1) {
+      const target = doc.getElementById(decodeURIComponent(hash.slice(1)));
+      if (target) {
+        target.scrollIntoView();
+        return;
+      }
+    }
+
+    window.scrollTo(0, 0);
+    const main = $('main');
+    if (!main) return;
+    main.setAttribute('tabindex', '-1');
+    main.focus({ preventScroll: true });
+  }
+
+  function routeTo(url, push) {
+    if (routeAbort) routeAbort.abort();
+    const controller = new AbortController();
+    routeAbort = controller;
+
+    fetch(url, { signal: controller.signal, cache: 'no-store' })
+      .then(function (response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.text();
+      })
+      .then(function (markup) {
+        const target = new window.URL(url, window.location.href);
+        const parsed = new window.DOMParser().parseFromString(markup, 'text/html');
+        const page = pageForPathname(target.pathname);
+        if (!page || !swapContent(parsed, page)) throw new Error('Unexpected page');
+
+        if (push) window.history.pushState({ page: page }, '', target.href);
+        else window.history.replaceState({ page: page }, '', target.href);
+
+        initContent();
+        landOnPage(target.hash);
+      })
+      .catch(function (error) {
+        if (error && error.name === 'AbortError') return;
+        window.location.href = url;
+      });
+  }
+
+  function initRouter() {
+    if (!canRoute) return;
+    currentPage = pageForPathname(window.location.pathname);
+
+    doc.addEventListener('click', function (event) {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const link = event.target.closest ? event.target.closest('a[href]') : null;
+      if (!link) return;
+      if (link.target === '_blank' || link.hasAttribute('download')) return;
+
+      const raw = link.getAttribute('href') || '';
+      if (raw.charAt(0) === '#') return;
+
+      const url = new window.URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+
+      // index.html and the folder itself are the same page, so keep the short URL.
+      const path = url.pathname === DIRECTORY + 'index.html' ? DIRECTORY : url.pathname;
+      const page = pageForPathname(path);
+      if (!page) return;
+      if (page === currentPage && url.search === window.location.search && !url.hash) return;
+
+      event.preventDefault();
+      closeDialog($('#nav-dialog'));
+      routeTo(path + url.search + url.hash, true);
+    });
+
+    window.addEventListener('popstate', function () {
+      routeTo(window.location.pathname + window.location.search + window.location.hash, false);
+    });
+  }
+
   /* Boot ----------------------------------------------------------------- */
 
   function setYear() {
@@ -1603,25 +1776,44 @@
     if (year) year.textContent = String(new Date().getFullYear());
   }
 
-  function init() {
+  /* Bindings that live outside <main> and are set up once per browser load. */
+  function initChrome() {
     htmlLanguageFromStorage();
     initTheme();
     initDialogs();
-    initTabs();
-    initPresenters();
-    initNews();
-    initArticle();
-    initForms();
     initPlayer();
-    initPodcasts();
-    initShare();
     initSocial();
     initLanguage();
-    preselectTopic();
     setYear();
 
-    applyLanguage(lang, false);
+    const footer = $('.site-footer');
+    if (footer) initShare(footer);
+
+    initRouter();
     window.setInterval(updateNow, 15000);
+  }
+
+  /* Bindings for the current page, re-run after every content swap. */
+  function initContent() {
+    const main = $('main');
+    if (!main) return;
+
+    initTabs(main);
+    initPresenters(main);
+    initNews(main);
+    initArticle(main);
+    initForms(main);
+    bindDialogControls(main);
+    bindPlayButtons(main);
+    initShare(main);
+    initPodcasts(main);
+    preselectTopic();
+    applyLanguage(lang, false);
+  }
+
+  function init() {
+    initChrome();
+    initContent();
   }
 
   if (doc.readyState === 'loading') {

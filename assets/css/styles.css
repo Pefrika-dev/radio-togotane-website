@@ -415,6 +415,11 @@ button {
 }
 
 /* Header */
+/* Receiving focus after a page swap is programmatic, so it shows no ring. */
+main[tabindex]:focus-visible {
+  outline: none;
+}
+
 .site-header {
   position: sticky;
   top: 0;

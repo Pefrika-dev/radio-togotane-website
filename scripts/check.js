@@ -10,6 +10,7 @@
  *   - internal links, images and fonts resolve to real files
  *   - pages have a title, description, one h1, no leftover build tokens
  *   - ids are unique and every form control has a label
+ *   - every built page is one the player can swap to without reloading
  */
 
 const fs = require('node:fs');
@@ -92,6 +93,22 @@ const pages = fs
   .filter((file) => file.endsWith('.html'));
 
 if (!pages.length) report('No built HTML files. Run "npm run build" first.');
+
+/* In-page navigation keeps the audio playing; a page it does not know about stops it. */
+const routeList = appSource.match(/const PAGE_NAMES = \[([^\]]*)\]/);
+if (!routeList) {
+  report('assets/js/app.js: the PAGE_NAMES navigation list is missing');
+} else {
+  const routed = (routeList[1].match(/'([^']+)'/g) || []).map((token) => token.slice(1, -1));
+  pages.forEach((file) => {
+    const name = file.replace(/\.html$/, '');
+    if (name === 'index' || name === '404') return;
+    if (!routed.includes(name)) report(`${file} is not in PAGE_NAMES, so listening stops there`);
+  });
+  routed.forEach((name) => {
+    if (!pages.includes(name + '.html')) report(`PAGE_NAMES lists ${name}, but ${name}.html was not built`);
+  });
+}
 
 function localTarget(url) {
   const clean = url.split('#')[0].split('?')[0].replace(/&amp;/g, '&').trim();

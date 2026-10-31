@@ -14,3 +14,6 @@ media/podcasts/*.part
 
 # Vercel project link and local build output
 .vercel/
+
+# The site has no npm dependencies, so a lockfile is only local noise.
+package-lock.json
