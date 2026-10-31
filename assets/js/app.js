@@ -483,7 +483,16 @@
   /* Live player ---------------------------------------------------------- */
 
   const streamUrl = String(config.streamUrl || '').trim();
-  const player = { audio: null, state: 'idle', url: streamUrl, lastPosition: -1, lastProgress: 0 };
+  const player = {
+    audio: null,
+    state: 'idle',
+    url: streamUrl,
+    lastPosition: -1,
+    lastProgress: 0,
+    // True while the listener's request for live radio still stands, so the
+    // player keeps looking for the station without being pressed again.
+    wantsLive: false,
+  };
 
   // The station broadcasts MP3. Only a browser that cannot decode MP3 at all
   // may honestly be told the format is unsupported; a refused or offline
@@ -493,17 +502,28 @@
 
   // A live mount can refuse one listener, answer the next, or stop feeding a
   // connection that is already open. The player therefore re-attempts on its own
-  // with a growing pause, and stops after about a minute and a half so the
-  // status can say “off air” honestly instead of pretending to connect forever.
+  // with a growing pause. After the fast ladder it does not give up and wait for
+  // another press: the station's own source comes and goes, so once a listener
+  // has asked for live radio, the site keeps looking for it every minute until
+  // it answers or the listener presses stop.
   const LIVE_RETRY_STEPS = [1100, 3000, 8000, 15000, 30000, 30000];
+  const LIVE_STANDBY_MS = 60000;
   const LIVE_STALL_MS = 12000;
   let retryTimer = null;
+  let standbyTimer = null;
   let retriesDone = 0;
 
   function clearRetry() {
     if (retryTimer !== null) {
       clearTimeout(retryTimer);
       retryTimer = null;
+    }
+  }
+
+  function clearStandby() {
+    if (standbyTimer !== null) {
+      clearTimeout(standbyTimer);
+      standbyTimer = null;
     }
   }
 
@@ -549,7 +569,22 @@
       return;
     }
 
-    setPlayerState('error', t('player.announceError'));
+    setPlayerState('standby', t('player.announceError'));
+    clearStandby();
+    standbyTimer = setTimeout(function () {
+      standbyTimer = null;
+      if (player.wantsLive) rejoinLive();
+    }, LIVE_STANDBY_MS);
+  }
+
+  // One fresh round of attempts, starting from the quick first retry: used by
+  // the minute-by-minute stand-by and by the browser reporting that the network
+  // or the page is back, so a listener never has to press again.
+  function rejoinLive() {
+    clearRetry();
+    clearStandby();
+    retriesDone = 0;
+    startPlayback(true);
   }
 
   // A dead live connection can sit in the buffer with the browser never
@@ -580,6 +615,7 @@
       live: t('player.status.live'),
       paused: t('player.status.paused'),
       retrying: t('player.status.retrying'),
+      standby: t('player.status.standby'),
       error: t('player.status.error'),
       unsupported: t('player.status.unsupported'),
     };
@@ -587,7 +623,7 @@
     $$('#hero-status, #player-status').forEach(function (el) {
       el.classList.toggle('is-live', state === 'live');
       el.classList.toggle('is-loading', state === 'loading' || state === 'retrying');
-      el.classList.toggle('is-error', state === 'error' || state === 'unsupported' || state === 'retrying');
+      el.classList.toggle('is-error', state === 'error' || state === 'unsupported' || state === 'retrying' || state === 'standby');
     });
 
     $$('[data-player-status-text], #player-status-text').forEach(function (el) {
@@ -628,8 +664,10 @@
 
     if (!isRetry) {
       clearRetry();
+      clearStandby();
       retriesDone = 0;
     }
+    player.wantsLive = true;
 
     player.lastPosition = -1;
     player.lastProgress = Date.now();
@@ -643,6 +681,7 @@
       audio.addEventListener('playing', function () {
         if (audio.__retired) return;
         clearRetry();
+        clearStandby();
         retriesDone = 0;
         setPlayerState('live', t('player.announceLive'));
       });
@@ -657,6 +696,11 @@
       audio.addEventListener('pause', function () {
         if (audio.__retired) return;
         if (player.state === 'live' || player.state === 'loading') {
+          // Either the listener stopped it or an archive clip took over: the
+          // request for live radio is withdrawn, so reconnecting must stop too.
+          player.wantsLive = false;
+          clearRetry();
+          clearStandby();
           setPlayerState('paused', t('player.announcePaused'));
         }
       });
@@ -697,7 +741,9 @@
     }
     if (player.state === 'loading' || (player.audio && !player.audio.paused)) {
       // Stopping during the retry gap must cancel the pending attempt too.
+      player.wantsLive = false;
       clearRetry();
+      clearStandby();
       retriesDone = 0;
       if (player.state === 'loading') {
         // Nothing was ever heard, so the attempt is dropped rather than paused:
@@ -708,6 +754,17 @@
       } else {
         player.audio.pause();
       }
+      return;
+    }
+    // A listener who has changed their mind while the player is pursuing the
+    // station presses once to stop the search, exactly as they would during a
+    // first connection attempt; a second press would then start it again.
+    if (player.state === 'retrying' || player.state === 'standby') {
+      player.wantsLive = false;
+      clearRetry();
+      clearStandby();
+      discardPlayerAudio();
+      setPlayerState('idle');
       return;
     }
     startPlayback();
@@ -737,9 +794,25 @@
       button.addEventListener('click', togglePlayback);
     });
 
-    if (player.url) window.setInterval(watchLiveProgress, 5000);
+    if (player.url) {
+      window.setInterval(watchLiveProgress, 5000);
+
+      // A listener waiting through an off-air spell should not have to press
+      // again: the moment the browser says the network is back, or the page is
+      // opened again after being backgrounded, the station is asked once more.
+      window.addEventListener('online', function () {
+        if (player.wantsLive && !audioStillPlaying()) rejoinLive();
+      });
+      doc.addEventListener('visibilitychange', function () {
+        if (!doc.hidden && player.wantsLive && !audioStillPlaying()) rejoinLive();
+      });
+    }
 
     setPlayerState('idle');
+  }
+
+  function audioStillPlaying() {
+    return Boolean(player.audio) && !player.audio.paused;
   }
 
   /* Play buttons that live inside a page are rebound whenever content is swapped. */
