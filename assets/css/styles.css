@@ -2818,14 +2818,6 @@ html[lang='sw'] .hero__alt {
   font-weight: 600;
 }
 
-.proposal__credit {
-  margin-top: 1.8rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
 /* Listen back */
 .podcasts__layout {
   display: grid;

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * Published programme schedule supplied for this proposal.
+ * Programme schedule as published by the station.
  * Times are 24-hour East Africa Time (Africa/Nairobi). days: 0 = Sunday.
  * Only update this file when the station confirms a change; the homepage and
  * the programs page both render from it.

@@ -1,10 +1,10 @@
-# Radio Togotane 88.3 FM — website proposal
+# Radio Togotane 88.3 FM — official station website
 
-A complete, dependency-free website proposal for **Radio Togotane 88.3 FM**, Kehancha, Migori County, Kenya. The site is built as static HTML, CSS and vanilla JavaScript, with a bilingual English/Kiswahili interface, a persistent light/dark theme, a published programme schedule, a live player connected to the station's online stream, an automatic listen-back archive of recent broadcast hours, presenter and news layouts, advertising and community-announcement pages, and a contact page. It carries the station's own logo and its verified public channels.
+A complete, dependency-free website for **Radio Togotane 88.3 FM**, Kehancha, Migori County, Kenya. It was built as a design proposal and the station has since approved it as its own site, so the pages speak as Radio Togotane and carry no builder credit. The site is built as static HTML, CSS and vanilla JavaScript, with a bilingual English/Kiswahili interface, a persistent light/dark theme, a published programme schedule, a live player connected to the station's online stream, an automatic listen-back archive of recent broadcast hours, presenter and news layouts, advertising and community-announcement pages, and a contact page. It carries the station's own logo and its verified public channels.
 
 Everything that was not supplied or publicly published by the station is either omitted or clearly marked as pending. No presenters' biographies, news stories, events, social profiles, audience figures, awards, coverage claims or advertising rates have been invented.
 
-**Live copy of this proposal:** <https://radio-togotane-website.vercel.app> — this is the canonical address, and every canonical tag, Open Graph URL and `sitemap.xml` entry points here. The same build is also served at <https://pefrika-dev.github.io/radio-togotane-website/> as a mirror; its pages carry canonical tags to Vercel, so search engines credit one address only. The station's own domain can replace it at any time by running `npm run seo -- https://your-domain`, rebuilding and redeploying.
+**Live site:** <https://radio-togotane-website.vercel.app> — this is the canonical address, and every canonical tag, Open Graph URL and `sitemap.xml` entry points here. The same build is also served at <https://pefrika-dev.github.io/radio-togotane-website/> as a mirror; its pages carry canonical tags to Vercel, so search engines credit one address only. The station's own domain can replace it at any time by running `npm run seo -- https://your-domain`, rebuilding and redeploying.
 
 ---
 
@@ -153,7 +153,7 @@ Two things follow from that, and both are implemented:
 
 Because a refused or offline source reaches the browser as the same media error as a codec the browser cannot decode, the states are worded apart: “Stream off air — auto-reconnecting” while the quick ladder is running, “Stream off air — searching again every minute” in stand-by, “Stream off air — press play to retry” when an attempt is refused and nothing is pending, and the “your browser does not support this stream format” wording is reserved for browsers that genuinely cannot decode MP3.
 
-**What “live” means here.** The station's mount is a single relay of the same broadcast that goes out over 88.3 FM, and every listener is served that one feed: two connections opened at the same moment received byte-identical audio (`icy-name: RADIO TOGOTANE 88.3 FM`, 128 kbps). Each device still buffers a second or two of its own, so two phones are close together rather than sample-exact, and any internet relay sits a little behind the transmitter. The site narrows that gap by always joining the live edge — it never plays a stored file and never rewinds to catch up — but closing the remaining seconds would need a synchronised clock on a backend, which this dependency-free proposal does not have and does not claim.
+**What “live” means here.** The station's mount is a single relay of the same broadcast that goes out over 88.3 FM, and every listener is served that one feed: two connections opened at the same moment received byte-identical audio (`icy-name: RADIO TOGOTANE 88.3 FM`, 128 kbps). Each device still buffers a second or two of its own, so two phones are close together rather than sample-exact, and any internet relay sits a little behind the transmitter. The site narrows that gap by always joining the live edge — it never plays a stored file and never rewinds to catch up — but closing the remaining seconds would need a synchronised clock on a backend, which this dependency-free site does not have and does not claim.
 
 The player never autoplays: `new Audio()` is created only when a play control is pressed, and playback is driven by real audio events. With an empty `streamUrl` the controls open the pending dialog instead, the status reads “Stream not connected”, and no audio element is created.
 
@@ -161,7 +161,7 @@ Use a direct **HTTPS MP3 or AAC** stream for the widest browser support. An HLS 
 
 ### 4.2 Station details
 
-The same file holds the station name, frequency, town, county, timezone, WhatsApp number, email and phone numbers. The values currently in the file are the exact details supplied for this proposal. The public pages also contain the clickable phone, WhatsApp and email links, so search for `254714426619`, `togotaneradiofm@gmail.com`, `+254701395196` and `+254728506650` if any of them change.
+The same file holds the station name, frequency, town, county, timezone, WhatsApp number, email and phone numbers. The values currently in the file are the exact details supplied by the station. The public pages also contain the clickable phone, WhatsApp and email links, so search for `254714426619`, `togotaneradiofm@gmail.com`, `+254701395196` and `+254728506650` if any of them change.
 
 ### 4.3 Social profiles — verified, pending station confirmation
 
@@ -226,7 +226,7 @@ The page fetches `assets/data/episodes.json` on load, shows recordings newest fi
 
 **Storage:** at 128 kbps a recording is about 57 MB per hour, roughly 1.4 GB per day if the stream is captured around the clock. Decide a retention window (for example seven or thirty days); delete old MP3s and the manifest will drop them at the next hourly rewrite, or remove the entries in `episodes.json` yourself.
 
-**Rights:** the recorder captures whatever the stream carries, including music and advertising that may be licensed only for live broadcast. Before publishing the archive, the station must confirm it holds the rights to make recordings available on demand — especially for music. The four-minute clip included in this proposal was captured from the station's own public stream solely to demonstrate that the page and player work; it should be replaced by the station's own retention policy (or removed) before launch.
+**Rights:** the recorder captures whatever the stream carries, including music and advertising that may be licensed only for live broadcast. Before publishing the archive, the station must confirm it holds the rights to make recordings available on demand — especially for music. The four-minute clip included here was captured from the station's own public stream solely to demonstrate that the page and player work; it should be replaced by the station's own retention policy (or removed) before the archive is promoted.
 
 ### 4.8 Logo and station imagery
 
@@ -243,7 +243,7 @@ Replace any of these by dropping in a file of the same name and rebuilding. If t
 
 ## 5. Information still required from the station
 
-These items are visibly marked as pending in the proposal and are not invented:
+The station has adopted the site and publishes it in its own voice, so no approval item is outstanding and no page carries builder credit. What remains are the details still to be supplied:
 
 1. Confirmation that the connected stream feed (`https://stream.zeno.fm/1dahxtvjx47vv`) is the station's authorised address.
 2. Sunday programme schedule.
@@ -258,8 +258,7 @@ These items are visibly marked as pending in the proposal and are not invented:
 11. Confirmed roles or titles for the news team (Weiria Rose, Jomo, Johnes Mairari).
 12. Permission to make stream recordings available on demand, and a retention period for the archive (see §4.7).
 13. A machine that can run the recorder continuously, or agreement on how the archive will be hosted.
-14. The station's approval of this proposal as its official website. Until then the footer states that publication awaits station approval.
-15. A decision on keeping the station's broadcast source connected to its Zeno mount. The mount was heard to be silent at 09:19 EAT and carrying the live 128 kbps programme at 09:33 EAT the same morning (§4.1); while it is cold, every player on the internet fails identically, including the station's own pages. `node tools/check-stream.js --watch` produces the evidence.
+14. A decision on keeping the station's broadcast source connected to its Zeno mount. The mount was heard to be silent at 09:19 EAT and carrying the live 128 kbps programme at 09:33 EAT the same morning (§4.1); while it is cold, every player on the internet fails identically, including the station's own pages. `node tools/check-stream.js --watch` produces the evidence.
 
 The “Johnes Mairari may present Tabataba on some occasions” detail is stated as a possibility, not as a fixed pairing with Terry Rhobi.
 
@@ -267,7 +266,7 @@ The “Johnes Mairari may present Tabataba on some occasions” detail is stated
 
 ## 6. SEO and launch checklist
 
-Per-page titles, descriptions, canonical URLs, Open Graph tags, a `RadioStation` JSON-LD block, `robots.txt` and a sitemap are supported. Canonical/OG URLs and the sitemap are only emitted after a real URL is set, so the proposal cannot accidentally claim a domain.
+Per-page titles, descriptions, canonical URLs, Open Graph tags, a `RadioStation` JSON-LD block, `robots.txt` and a sitemap are supported. Canonical/OG URLs and the sitemap are only emitted after a real URL is set, so the site cannot accidentally claim a domain.
 
 ```sh
 npm run seo -- https://your-domain.example
@@ -367,7 +366,7 @@ The local preview server already sends the first four headers. Google Maps is li
 
 ## 8. Known limitations
 
-- **A proposal, not a published station site** — this website carries the station's real identity, but Radio Togotane has not approved or commissioned it. The footer says publication awaits station approval, and nothing on the site claims to speak for the station.
+- **Adopted, but still incomplete** — Radio Togotane approved the site as its own and publishes it in its own voice, so the pages no longer describe themselves as a draft and carry no builder credit. What is still outstanding is content, not permission: the items in §5 remain visibly marked as pending, and nothing has been invented to fill them.
 - **Stream confirmed, provider not yet approved** — the player carries the station's Zeno.fm feed, which was verified to be live and identify itself as “RADIO TOGOTANE 88.3 FM”. The station still needs to confirm that this is its authorised address; the feed depends on its third-party provider staying active and on the station keeping its own source connected — the same address answered `503 Mount point not active` at 09:19 EAT and streamed the programme at 128 kbps at 09:33 EAT (§4.1). HLS playback in Chrome/Firefox would require an additional library.
 - **Live means the same relay, not sample-exact sync** — every listener is served one continuous stream by the provider, so two phones pressed at the same moment hear the same programme and the same words (§4.1). Each device still buffers and decodes on its own, so playback positions differ by a fraction of a second, and a phone that starts later is further behind until it catches up at the live edge. There is no backend clock that could force two devices to align, and none is claimed.
 - **Archive depends on the recorder** — only hours captured while `tools/record.js` is running appear on the Listen back page. The included archive is one genuine 4 min 09 s demonstration clip, not a complete day; gaps are left as gaps. Continuous capture needs an always-on machine, storage space (about 1.4 GB per day at 128 kbps) and a retention decision.
@@ -379,7 +378,7 @@ The local preview server already sends the first four headers. Google Maps is li
 - **Public channels** — Facebook, YouTube and X were verified against the station's own publications and a public radio directory, but the station has not yet confirmed them for this site, and no official Instagram or TikTok account could be found.
 - **News team roles** — names are shown without titles or credentials.
 - **Studio location** — only “Kehancha, Migori County, Kenya” is published; no street address, coordinates or office hours.
-- **Logo** — the artwork is the logo the station publishes on its own stream profile and channel avatar, cropped and optimised locally. It is not a supplied original file, and the station has not yet approved its use on this proposal; a supplied original should replace it (§4.8).
+- **Logo** — the artwork is the logo the station publishes on its own stream profile and channel avatar, cropped and optimised locally. It is a derivative of that public artwork rather than a supplied original file, so the station's own logo files should replace it (§4.8, §5).
 - **Page descriptions** — visible content and page titles switch language; the `<meta name="description">` text remains English so search engines have one consistent summary. It can be localised later if required.
 - **Brand names** — presenter names, programme titles and place names are preserved in both languages, as proper names should be.
 
