@@ -171,6 +171,11 @@ function describe(result) {
     ].filter(Boolean);
     return 'ON AIR  ' + parts.join(' · ');
   }
+  // A refused mount and an unanswered one are different facts: the first is the
+  // station's source not being fed, the second is the provider not answering.
+  if (!result.status) {
+    return 'NOT ANSWERING  ' + result.host + ' · ' + result.detail;
+  }
   return 'OFF AIR  HTTP ' + result.status + ' from ' + result.host + ' · ' + result.detail;
 }
 
@@ -196,7 +201,9 @@ async function main() {
     console.log(
       result.onAir
         ? 'The station is feeding its online mount; the website player will play it.'
-        : 'The station itself is not feeding this mount. No website setting can fix that — the browser is not the problem.'
+        : result.status
+          ? 'The provider refused the mount. The station is not feeding it; no website setting can fix that — the browser is not the problem.'
+          : 'The provider did not answer at all, so nothing can be heard from it; this is a network or provider condition, not a website bug.'
     );
     process.exit(result.onAir ? 0 : 1);
   }
