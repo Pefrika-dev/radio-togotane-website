@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Programme Schedule — Radio Togotane 88.3 FM</title>
-  <meta name="description" content="The published weekday and Saturday programme schedule for Radio Togotane 88.3 FM in Kehancha, with programme times, presenters and the Sunday schedule pending confirmation.">
+  <meta name="description" content="The published weekday, Saturday and Sunday programme schedule for Radio Togotane 88.3 FM in Kehancha, with programme times and presenters.">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0a0d11">
   <meta name="google-site-verification" content="ejesf02wh3m6_0G9TV7j9q7TCTk6vQhNJRgXFziQAgc">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Radio Togotane 88.3 FM">
   <meta property="og:title" content="Programme Schedule — Radio Togotane 88.3 FM">
-  <meta property="og:description" content="The published weekday and Saturday programme schedule for Radio Togotane 88.3 FM in Kehancha, with programme times, presenters and the Sunday schedule pending confirmation.">
+  <meta property="og:description" content="The published weekday, Saturday and Sunday programme schedule for Radio Togotane 88.3 FM in Kehancha, with programme times and presenters.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://radio-togotane-website.vercel.app/programs.html">
   <meta property="og:url" content="https://radio-togotane-website.vercel.app/programs.html">
@@ -19,8 +19,8 @@
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/css/styles.css?v=235e7fc4">
-  <script src="assets/js/boot.js?v=235e7fc4"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=3163a697">
+  <script src="assets/js/boot.js?v=3163a697"></script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -124,7 +124,7 @@
     <div class="container page-hero__inner">
       <p class="eyebrow" data-i18n="schedule.eyebrow">Programme schedule</p>
       <h1 class="page-hero__title" data-i18n="schedule.heroTitle">The week, hour by hour.</h1>
-      <p class="page-hero__lead" data-i18n="schedule.heroLead">The station's published weekday and Saturday programmes, with presenters and East Africa Time. Sunday programming is still being confirmed.</p>
+      <p class="page-hero__lead" data-i18n="schedule.heroLead">The station's published weekday, Saturday and Sunday programmes, with presenters and East Africa Time.</p>
     </div>
   </header>
 
@@ -148,11 +148,7 @@
           <div class="program-grid" data-programs></div>
         </div>
         <div class="schedule__panel" role="tabpanel" id="panel-sunday" aria-labelledby="tab-sunday" tabindex="0" hidden>
-          <div class="empty-state empty-state--wide">
-            <p class="empty-state__title" data-i18n="schedule.sundayTitle">Sunday programming is being confirmed</p>
-            <p class="empty-state__body" data-i18n="schedule.sundayBody">The station has not yet published its Sunday schedule. Confirmed details will be added here, and will not be guessed in the meantime.</p>
-            <a class="btn btn--ghost btn--sm" href="contact.html" data-i18n="actions.contactStation">Contact the station</a>
-          </div>
+          <div class="program-grid" data-programs></div>
         </div>
 
         <p class="schedule__note" data-i18n="schedule.note">Programme details follow the station's published schedule. Unless the player shows a live connection, this is not a confirmation that a presenter is on air.</p>
@@ -172,8 +168,18 @@
           <ul>
             <li>Sabato — 05:00–09:00 — Lucas Mwikabe</li>
             <li>Sauti ya Watoto Wetu — 09:00–12:00 — Terry Rhobi (Superlady)</li>
+            <li>Agakarai Numukuria — 12:00–16:00 — presenter to be confirmed</li>
+            <li>Iritara Reemehooro — 16:00–18:00 — presenter to be confirmed</li>
+            <li>Omongoroba Umunyoohu — 18:00–21:00 — presenter to be confirmed</li>
           </ul>
-          <p><strong>Sunday</strong> — programming to be confirmed.</p>
+          <p><strong>Sunday</strong></p>
+          <ul>
+            <li>Amaitabiryo — 05:00–09:00 — presenter to be confirmed</li>
+            <li>Tusimane — 09:00–13:00 — presenter to be confirmed</li>
+            <li>Reggae Brast — 13:00–16:00 — presenter to be confirmed</li>
+            <li>Misa Mix — 16:00–19:00 — presenter to be confirmed</li>
+            <li>Gospel Sunday — 19:00–22:00 — presenter to be confirmed</li>
+          </ul>
         </div>
       </noscript>
     </div>
@@ -185,7 +191,7 @@
         <h2 class="section__title" id="notes-title" data-i18n="schedule.notesTitle">How to read this schedule.</h2>
         <p data-i18n="schedule.notesBody1">Times are shown in 24-hour East Africa Time (Africa/Nairobi). A programme listed as ending at 00:00 finishes at midnight.</p>
         <p data-i18n="schedule.notesBody2">Tabataba is hosted by Terry Rhobi, with Johnes Mairari presenting on some occasions. The schedule does not assume that both presenters are on air for every broadcast.</p>
-        <p data-i18n="schedule.notesBody3">The Sunday schedule and any public-holiday changes will be added only after the station confirms them.</p>
+        <p data-i18n="schedule.notesBody3">Public-holiday and last-minute changes are added when the station publishes them.</p>
         <a class="link-arrow" href="presenters.html" data-i18n="actions.allPresenters">All presenters</a>
       </div>
       <aside class="note-card">
@@ -307,9 +313,9 @@
   <p class="sheet__note" data-i18n="player.pendingNote">The published programme schedule remains available while the online stream is offline.</p>
 </dialog>
 
-  <script src="assets/js/config.js?v=235e7fc4" defer></script>
-  <script src="assets/js/data.js?v=235e7fc4" defer></script>
-  <script src="assets/js/i18n.js?v=235e7fc4" defer></script>
-  <script src="assets/js/app.js?v=235e7fc4" defer></script>
+  <script src="assets/js/config.js?v=3163a697" defer></script>
+  <script src="assets/js/data.js?v=3163a697" defer></script>
+  <script src="assets/js/i18n.js?v=3163a697" defer></script>
+  <script src="assets/js/app.js?v=3163a697" defer></script>
 </body>
 </html>

@@ -12,7 +12,7 @@ Everything that was not supplied or publicly published by the station is either 
 
 - **Home** — hero, live-listening panel, station facts, schedule preview, presenter preview, news preview, advertising band, community/events preview, an official-channels strip and a contact band.
 - **About** — an identity plate with the station's logo and its verified public channels, what the station publishes today, a photograph from the station's own public post, audience, principles and a visible list of information still to be supplied.
-- **Programs** — the published weekday and Saturday schedule in tabs, a Sunday placeholder, East Africa Time clock, current-programme highlighting and keyboard support.
+- **Programs** — the published weekday, Saturday and Sunday schedule in tabs, an East Africa Time clock, current-programme highlighting and keyboard support.
 - **Listen back** — recordings of the online stream in hourly files, tagged with the programme that was published for that hour, with programme filters, a built-in player, seeking and honest empty/error states. One genuine four-minute clip is included; longer archives appear as the recorder runs.
 - **Presenters** — the seven named presenters, one portrait taken from the station's own public post, neutral placeholders instead of invented portraits or biographies, and the separately named news team with roles marked as unconfirmed.
 - **News** — category filters, a featured sample card, sample story cards and an accessible article dialog. Every sample is labelled as a sample.
@@ -185,7 +185,7 @@ One source drives four places: the footer social row, the About identity plate (
 
 [`assets/js/data.js`](assets/js/data.js) is the single source for both the home preview and the full schedule. Each programme has an `id`, `name`, `days` (0 = Sunday), 24-hour `start`/`end` times and presenters. Times are Africa/Nairobi. Change a time or presenter in this one file and rebuild; do not edit the generated cards by hand.
 
-Sunday is intentionally empty with a clear “schedule being confirmed” state. Do not add a Sunday programme until the station confirms it.
+The week carries fifteen published programmes: five on each weekday (05:00–00:00), five on Saturday (05:00–21:00) and five on Sunday (05:00–22:00). The Saturday afternoon and Sunday line-up was supplied by the station on 2026-10-31 and added to this file the same day. Eight of those programmes have no host named yet, so their cards read "Presenter to be confirmed" instead of a guessed presenter — fill in `presenters` when the station supplies names. Times that no programme covers stay empty.
 
 ### 4.5 Language and theme
 
@@ -246,7 +246,7 @@ Replace any of these by dropping in a file of the same name and rebuilding. If t
 The station has adopted the site and publishes it in its own voice, so no approval item is outstanding and no page carries builder credit. What remains are the details still to be supplied:
 
 1. Confirmation that the connected stream feed (`https://stream.zeno.fm/1dahxtvjx47vv`) is the station's authorised address.
-2. Sunday programme schedule.
+2. Presenter names for the eight Saturday-afternoon and Sunday programmes now listed.
 3. Photographs and short biographies for the six presenters still shown with monogram placeholders.
 4. Confirmed news stories and events.
 5. Confirmation of the three public channels now linked (Facebook, YouTube, X), plus official Instagram/TikTok handles if they exist.
@@ -279,7 +279,7 @@ Then:
 1. Confirm the stream still plays from the deployed domain (the CSP in §6 must allow the Zeno hosts).
 2. Replace sample news cards and the empty events state with confirmed content, or leave them labelled as samples.
 3. Add the remaining presenter photographs and bios once supplied (§4.8).
-4. Confirm Sunday programming before adding it to `data.js`.
+4. Add the presenter names for the weekend programmes now listed, as the station supplies them.
 5. Confirm the three linked channels and add any other official profiles to `config.js` (§4.3).
 6. Confirm recording rights and a retention period before publishing the archive (§4.7).
 7. Verify the site in Google Search Console against the **exact deployed URL prefix** — `https://radio-togotane-website.vercel.app/` — using the **HTML tag** method. [src/layout.html](src/layout.html) already carries `<meta name="google-site-verification">` on all ten pages, and both hosts serve it. A *Domain* property cannot be verified from this project: it asks for a DNS TXT record on a zone the repository does not control, and the HTML-file method needs Google's own `google….html` upload placed at the same path prefix.
@@ -326,7 +326,7 @@ The local preview server already sends the first four headers. Google Maps is li
   - light/dark toggle changes colours, updates `theme-color` and persists across reloads;
   - EN/SW switch translates visible content, hides the duplicate Kiswahili hero line, updates the document title and persists across reloads;
   - schedule tabs switch panels, support Arrow keys/Home/End, show the Nairobi clock and mark only the current published programme;
-  - Sunday shows the confirmed-information placeholder, not invented programmes;
+  - the Saturday and Sunday tabs list the eight programmes the station supplied on 2026-10-31, and cards with no named host read "Presenter to be confirmed" rather than inventing one — checked in English and Kiswahili, at 14:35 EAT on a Saturday, when the dock and the highlight both named Agakarai Numukuria (12:00–16:00);
   - every “Listen live” control with no stream configured shows the pending dialog, creates no audio element and never shows a playing state;
   - with the stream configured, a reload leaves the player in “Ready — press play to listen” for at least six seconds, with no audio element and no media request, confirming no autoplay;
   - pressing “Listen live” issues the media request (`200 audio/mpeg`), reaches “Live audio playing” and stays there across a nine-second sample; the pause control stops playback and the resume control restarts it;

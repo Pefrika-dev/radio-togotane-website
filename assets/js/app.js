@@ -121,9 +121,12 @@
     };
   }
 
+  const DAYS_BY_GROUP = { weekday: [1, 2, 3, 4, 5], saturday: [6], sunday: [0] };
+
   function groupForDay(day) {
     if (day >= 1 && day <= 5) return 'weekday';
     if (day === 6) return 'saturday';
+    if (day === 0) return 'sunday';
     return '';
   }
 
@@ -347,8 +350,14 @@
 
     const label = doc.createElement('span');
     label.className = 'program__label';
-    label.textContent = programme.presenters.length > 1 ? t('schedule.presentersLabel') : t('schedule.presenterLabel');
-    line.appendChild(label);
+    if (programme.presenters.length) {
+      label.textContent = programme.presenters.length > 1 ? t('schedule.presentersLabel') : t('schedule.presenterLabel');
+      line.appendChild(label);
+    } else {
+      const tbc = doc.createElement('span');
+      tbc.textContent = t('schedule.presenterTbc');
+      line.appendChild(tbc);
+    }
 
     programme.presenters.forEach(function (person, index) {
       if (index > 0) line.appendChild(doc.createTextNode(', '));
@@ -386,8 +395,8 @@
 
     grids.forEach(function (grid) {
       const panel = grid.closest('.schedule__panel');
-      const group = panel && panel.id === 'panel-saturday' ? 'saturday' : 'weekday';
-      const days = group === 'saturday' ? [6] : [1, 2, 3, 4, 5];
+      const group = (panel && panel.id.replace('panel-', '')) || 'weekday';
+      const days = DAYS_BY_GROUP[group] || DAYS_BY_GROUP.weekday;
       grid.textContent = '';
 
       data.schedule.forEach(function (programme) {
