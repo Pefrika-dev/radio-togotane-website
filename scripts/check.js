@@ -128,6 +128,27 @@ pages.forEach((file) => {
   const h1 = (html.match(/<h1[\s>]/g) || []).length;
   if (h1 !== 1) report(`${file}: expected exactly one h1, found ${h1}`);
 
+  /* A malformed structured-data block is silently dropped by the crawlers, and a
+   * breadcrumb trail that no page generated is the kind of thing only GSC tells
+   * you about weeks later. */
+  let dataBlock;
+  const dataPattern = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g;
+  const types = [];
+  while ((dataBlock = dataPattern.exec(html))) {
+    let parsed;
+    try {
+      parsed = JSON.parse(dataBlock[1]);
+    } catch (error) {
+      report(`${file}: structured data block is not valid JSON → ${error.message}`);
+      continue;
+    }
+    types.push(parsed['@type']);
+  }
+  const pageName = file.replace(/\.html$/, '');
+  if (/<link rel="canonical"/.test(html) && pageName !== 'index' && !types.includes('BreadcrumbList')) {
+    report(`${file}: canonical page has no BreadcrumbList`);
+  }
+
   const ids = new Set();
   let idMatch;
   const idPattern = /\sid="([^"]+)"/g;

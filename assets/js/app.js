@@ -1915,6 +1915,28 @@
     if (value !== null) target.setAttribute(attribute, value);
   }
 
+  /* Routing keeps the head honest. A crawler that renders JavaScript follows the
+   * same links a person does, so the breadcrumb it reads has to be the one for the
+   * page now on screen, not the page the document started as. */
+  function findBreadcrumb(root) {
+    const blocks = $$('script[type="application/ld+json"]', root);
+    for (let i = 0; i < blocks.length; i += 1) {
+      if (blocks[i].textContent.indexOf('BreadcrumbList') !== -1) return blocks[i];
+    }
+    return null;
+  }
+
+  function swapBreadcrumb(parsed) {
+    const source = findBreadcrumb(parsed.head || parsed);
+    const target = findBreadcrumb(doc.head);
+    if (!target) {
+      if (source) doc.head.appendChild(doc.importNode(source, true));
+      return;
+    }
+    if (!source) target.remove();
+    else target.textContent = source.textContent;
+  }
+
   function swapContent(parsed, page) {
     const nextMain = parsed.querySelector('main');
     const currentMain = $('main');
@@ -1930,6 +1952,7 @@
     copyMeta(parsed, 'meta[property="og:description"]', 'content');
     copyMeta(parsed, 'meta[property="og:url"]', 'content');
     copyMeta(parsed, 'link[rel="canonical"]', 'href');
+    swapBreadcrumb(parsed);
 
     $$('[data-nav]').forEach(function (link) {
       if (link.getAttribute('data-nav') === page) link.setAttribute('aria-current', 'page');

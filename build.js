@@ -40,6 +40,44 @@ function escapeAttr(value) {
   return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
+/* The name each page is filed under in the site's own navigation, and the only
+ * page filed under another. Home carries no trail and the last crumb is never a
+ * link, because it is the page you are already on. */
+const CRUMB_LABELS = {
+  index: 'Home',
+  about: 'About',
+  programs: 'Programs',
+  podcasts: 'Listen back',
+  presenters: 'Presenters',
+  news: 'News',
+  advertise: 'Advertise',
+  announce: 'Announcements',
+  contact: 'Contact',
+  'kuria-night': 'Togotane Cultural Kuria Night',
+};
+
+const CRUMB_PARENTS = { 'kuria-night': 'news' };
+
+function breadcrumbData(name) {
+  if (name === 'index') return '';
+  const label = CRUMB_LABELS[name];
+  if (!label) throw new Error(`${name}: add it to CRUMB_LABELS so its breadcrumb is real`);
+
+  const trail = [['Home', `${siteUrl}/`]];
+  const parent = CRUMB_PARENTS[name];
+  if (parent) {
+    if (!CRUMB_LABELS[parent]) throw new Error(`${name}: breadcrumb parent "${parent}" is not a known page`);
+    trail.push([CRUMB_LABELS[parent], `${siteUrl}/${parent}.html`]);
+  }
+
+  const items = trail
+    .map(([crumbLabel, href], index) => ({ '@type': 'ListItem', position: index + 1, name: crumbLabel, item: href }))
+    .concat({ '@type': 'ListItem', position: trail.length + 1, name: label });
+
+  const block = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items };
+  return `<script type="application/ld+json">${JSON.stringify(block, null, 2).replace(/<\//g, '<\\/')}</script>`;
+}
+
 const pages = fs
   .readdirSync(path.join(root, 'src', 'pages'))
   .filter((file) => file.endsWith('.html'))
@@ -67,6 +105,7 @@ for (const file of pages) {
     ? `<meta property="og:image" content="${escapeAttr(`${siteUrl}/${meta.ogImage || 'assets/images/hero-studio-1200.jpg'}`)}">`
     : '';
   const robots = isPrivate ? '<meta name="robots" content="noindex, nofollow">' : '';
+  const data = absolute ? `${structuredData}\n${breadcrumbData(name)}` : '';
 
   const pageHeader = header.replaceAll(`data-nav="${meta.page}"`, `data-nav="${meta.page}" aria-current="page"`);
 
@@ -79,7 +118,7 @@ for (const file of pages) {
     .replaceAll('{{CANONICAL}}', canonical)
     .replaceAll('{{OG_URL}}', ogUrl)
     .replaceAll('{{OG_IMAGE}}', ogImage)
-    .replaceAll('{{STRUCTURED_DATA}}', isPrivate ? '' : structuredData)
+    .replaceAll('{{STRUCTURED_DATA}}', data)
     .replaceAll('{{HEADER}}', pageHeader)
     .replaceAll('{{FOOTER}}', footer)
     .replaceAll('{{PLAYER}}', player)
