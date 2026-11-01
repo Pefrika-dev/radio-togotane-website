@@ -31,6 +31,7 @@
     advertise: 'title.advertise',
     announce: 'title.announce',
     contact: 'title.contact',
+    studio: 'title.studio',
     404: 'title.404',
   };
 
@@ -207,6 +208,9 @@
     refreshArticle();
     refreshPodcasts();
     renderChannels();
+    renderWallFeed();
+    renderStudio();
+    updateWallClock();
     clearFormFeedback();
   }
 
@@ -448,6 +452,7 @@
     });
 
     updateTuneIn(now, current);
+    updateWallClock();
 
     const dockNow = $('#dock-now');
     if (dockNow) {
@@ -661,7 +666,9 @@
 
   function getVolume() {
     const saved = parseFloat(storageGet(STORE_VOLUME));
-    if (isNaN(saved) || saved < 0 || saved > 1) return 0.8;
+    // The station asked for a full-volume start; a slider position a listener has
+    // moved themselves is kept instead.
+    if (isNaN(saved) || saved < 0 || saved > 1) return 1;
     return saved;
   }
 
@@ -1835,7 +1842,7 @@
    */
 
   const DIRECTORY = window.location.pathname.replace(/[^/]*$/, '');
-  const PAGE_NAMES = ['about', 'programs', 'podcasts', 'presenters', 'news', 'advertise', 'announce', 'contact'];
+  const PAGE_NAMES = ['about', 'programs', 'podcasts', 'presenters', 'news', 'advertise', 'announce', 'contact', 'studio'];
   const canRoute = Boolean(window.fetch && window.history && window.history.pushState && window.DOMParser);
 
   let currentPage = '';
@@ -1958,6 +1965,665 @@
     });
   }
 
+  /* Message wall ---------------------------------------------------------
+   *
+   * The wall is the one part of this site that talks to a server. It is honest
+   * about that: when /api/wall answers 501 the form and the feed are replaced
+   * by a plain "not connected" notice, and nothing is ever shown as accepted
+   * that the station did not accept. A listener's own note is tracked only in
+   * this tab, together with the delete token the API handed back.
+   */
+
+  const STORE_WALL = 'rt-wall-mine';
+  const STORE_STUDIO = 'rt-studio-token';
+  const WALL_POLL_MS = 4000;
+  const STUDIO_POLL_MS = 3000;
+
+  const wall = { connected: null, messages: [], mine: [], unavailable: false };
+  const studio = { token: '', pending: [], approved: [], loaded: false, denied: false, statusKey: '' };
+
+  const eatFormatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+
+  function eatClock(stamp) {
+    return eatFormatter.format(new Date(Number(stamp)));
+  }
+
+  function readMine() {
+    try {
+      const raw = window.sessionStorage.getItem(STORE_WALL);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function writeMine() {
+    try {
+      window.sessionStorage.setItem(STORE_WALL, JSON.stringify(wall.mine));
+    } catch (err) {
+      /* Storage can be blocked; the wall still works for this view. */
+    }
+  }
+
+  function mineOf(id) {
+    return wall.mine.filter(function (entry) {
+      return entry.id === id;
+    })[0] || null;
+  }
+
+  function forgetMine(id) {
+    wall.mine = wall.mine.filter(function (entry) {
+      return entry.id !== id;
+    });
+    writeMine();
+  }
+
+  function currentProgrammeName() {
+    const now = nairobiNow();
+    const programme = findCurrent(now);
+    return programme ? programme.name : '';
+  }
+
+  function setWallStatus(key, tone) {
+    const status = $('[data-wall-status]');
+    if (!status) return;
+    status.textContent = key ? t(key) : '';
+    status.className = key ? 'form-status is-' + tone : 'form-status';
+  }
+
+  function markWallConnected(ok) {
+    wall.connected = ok;
+    wall.unavailable = !ok;
+    const section = $('[data-wall]');
+    const offline = $('[data-wall-offline]');
+    if (offline) offline.hidden = ok;
+    if (section) section.classList.toggle('is-offline', !ok);
+  }
+
+  function buildWallItem(item) {
+    const li = doc.createElement('li');
+    li.className = 'wall__item';
+
+    const head = doc.createElement('p');
+    head.className = 'wall__item-head';
+
+    const name = doc.createElement('strong');
+    name.className = 'wall__item-name';
+    name.textContent = item.name;
+    head.appendChild(name);
+
+    const place = doc.createElement('span');
+    place.className = 'wall__item-place';
+    place.textContent = item.location;
+    head.appendChild(place);
+
+    const clock = doc.createElement('time');
+    clock.className = 'wall__item-time';
+    clock.dateTime = new Date(Number(item.createdAt)).toISOString();
+    clock.textContent = eatClock(item.createdAt);
+    head.appendChild(clock);
+
+    if (mineOf(item.id)) {
+      const tag = doc.createElement('span');
+      tag.className = 'wall__item-tag';
+      tag.textContent = t('wall.mineTag');
+      head.appendChild(tag);
+      li.classList.add('is-mine');
+    }
+
+    const body = doc.createElement('p');
+    body.className = 'wall__item-text';
+    body.textContent = item.message;
+
+    li.appendChild(head);
+    li.appendChild(body);
+
+    if (item.programme) {
+      const meta = doc.createElement('p');
+      meta.className = 'wall__item-during';
+      meta.textContent = t('studio.sentDuring') + ' ' + item.programme;
+      li.appendChild(meta);
+    }
+
+    if (mineOf(item.id)) {
+      const entry = mineOf(item.id);
+      const drop = doc.createElement('button');
+      drop.type = 'button';
+      drop.className = 'wall__item-remove btn btn--ghost btn--sm';
+      drop.textContent = t('actions.removeMine');
+      drop.addEventListener('click', function () {
+        removeMineNote(entry, drop);
+      });
+      li.appendChild(drop);
+    }
+
+    return li;
+  }
+
+  function renderWallFeed() {
+    const feed = $('[data-wall-feed]');
+    if (!feed) return;
+
+    feed.textContent = '';
+    wall.messages.forEach(function (item) {
+      feed.appendChild(buildWallItem(item));
+    });
+
+    const empty = $('[data-wall-empty]');
+    if (empty) empty.hidden = wall.messages.length > 0;
+
+    const remove = $('[data-wall-remove]');
+    if (remove) remove.hidden = !pendingMine();
+  }
+
+  function pendingMine() {
+    const ids = {};
+    wall.messages.forEach(function (item) {
+      ids[item.id] = true;
+    });
+    return wall.mine.filter(function (entry) {
+      return !ids[entry.id];
+    })[0] || null;
+  }
+
+  function removeMineNote(entry, button) {
+    if (!entry || !entry.id) return;
+    if (button) button.disabled = true;
+
+    sendWallNote({ action: 'delete', id: entry.id, secret: entry.secret })
+      .then(function (outcome) {
+        if (outcome.status === 200) {
+          forgetMine(entry.id);
+          wall.messages = wall.messages.filter(function (item) {
+            return item.id !== entry.id;
+          });
+          renderWallFeed();
+          setWallStatus('wall.removed', 'success');
+          return;
+        }
+        if (button) button.disabled = false;
+        setWallStatus(outcome.body && outcome.body.error === 'not-configured' ? '' : 'wall.errorRemove', 'error');
+      })
+      .catch(function () {
+        if (button) button.disabled = false;
+        setWallStatus('wall.errorRemove', 'error');
+      });
+  }
+
+  function fetchWall() {
+    if (doc.visibilityState === 'hidden') return Promise.resolve();
+
+    return window
+      .fetch('/api/wall', { headers: { accept: 'application/json' } })
+      .then(function (response) {
+        if (response.status === 501) {
+          markWallConnected(false);
+          return null;
+        }
+        if (!response.ok) throw new Error('status ' + response.status);
+        return response.json();
+      })
+      .then(function (payload) {
+        if (!payload) return;
+        markWallConnected(true);
+        wall.messages = Array.isArray(payload.messages) ? payload.messages : [];
+        renderWallFeed();
+        const waiting = pendingMine();
+        if (waiting) setWallStatus('wall.waiting', 'info');
+      })
+      .catch(function () {
+        markWallConnected(false);
+      });
+  }
+
+  function sendWallNote(payload) {
+    return window
+      .fetch('/api/wall', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      .then(function (response) {
+        return response.json().catch(function () {
+          return {};
+        }).then(function (body) {
+          return { status: response.status, body: body };
+        });
+      });
+  }
+
+  function validateWall(form) {
+    const errors = [];
+    const name = $('#wall-name', form);
+    const location = $('#wall-location', form);
+    const message = $('#wall-message', form);
+    const consent = $('#wall-consent', form);
+
+    const rules = [
+      [name, name.value.trim().length < 2 ? 'wall.errorName' : ''],
+      [location, location.value.trim().length < 2 ? 'wall.errorLocation' : ''],
+      [message, message.value.trim().length < 3 ? 'wall.errorMessage' : ''],
+      [consent, consent.checked ? '' : 'wall.errorConsent'],
+    ];
+
+    rules.forEach(function (rule) {
+      const key = rule[1];
+      setFieldError(rule[0], key ? t(key) : '');
+      if (key) errors.push(key);
+    });
+
+    return errors.length === 0;
+  }
+
+  function initWallForm(form) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      if (!validateWall(form)) {
+        setWallStatus('wall.errorFields', 'error');
+        return;
+      }
+
+      const submit = $('[data-wall-submit]', form);
+      if (submit) submit.disabled = true;
+      setWallStatus('wall.sending', 'info');
+
+      sendWallNote({
+        name: $('#wall-name', form).value.trim(),
+        location: $('#wall-location', form).value.trim(),
+        message: $('#wall-message', form).value.trim(),
+        consent: true,
+        programme: currentProgrammeName(),
+        website: $('#wall-website', form).value,
+      })
+        .then(function (outcome) {
+          if (outcome.status === 201 && outcome.body && outcome.body.id) {
+            wall.mine.push({ id: outcome.body.id, secret: outcome.body.secret });
+            writeMine();
+            if (outcome.body.feed && Array.isArray(outcome.body.feed.messages)) {
+              wall.messages = outcome.body.feed.messages;
+            }
+            renderWallFeed();
+            form.reset();
+            $$('[aria-invalid="true"]', form).forEach(function (el) {
+              setFieldError(el, '');
+            });
+            const count = $('[data-wall-count]', form);
+            if (count) count.textContent = '0';
+            markWallConnected(true);
+            setWallStatus('wall.sent', 'success');
+            return;
+          }
+
+          const code = outcome.body && outcome.body.error;
+          if (code === 'not-configured') markWallConnected(false);
+          setWallStatus(code === 'too-many' ? 'wall.errorTooMany' : 'wall.errorStore', 'error');
+        })
+        .catch(function () {
+          markWallConnected(false);
+          setWallStatus('wall.errorStore', 'error');
+        })
+        .then(function () {
+          if (submit) submit.disabled = false;
+        });
+    });
+
+    const message = $('#wall-message', form);
+    const count = $('[data-wall-count]', form);
+    if (message && count) {
+      message.addEventListener('input', function () {
+        count.textContent = String(message.value.length);
+      });
+    }
+
+    const remove = $('[data-wall-remove]');
+    if (remove) {
+      remove.addEventListener('click', function () {
+        removeMineNote(pendingMine(), remove);
+      });
+    }
+  }
+
+  function initWall(scope) {
+    const section = $('[data-wall]', scope);
+    if (!section) return;
+
+    wall.mine = readMine();
+
+    const form = $('[data-wall-form]', section);
+    if (form && !form.dataset.wallBound) {
+      form.dataset.wallBound = '1';
+      initWallForm(form);
+    }
+
+    markWallConnected(wall.connected === null ? true : wall.connected);
+    renderWallFeed();
+    fetchWall();
+  }
+
+  function updateWallClock() {
+    const clock = $('[data-wall-clock]');
+    const label = $('[data-wall-programme]');
+    const studioClock = $('[data-studio-clock]');
+    const studioLabel = $('[data-studio-programme]');
+    if (!clock && !label && !studioClock && !studioLabel) return;
+
+    const now = nairobiNow();
+    const programme = findCurrent(now);
+    const name = programme ? programme.name + ' · ' + formatRange(programme) : t('wall.offAir');
+
+    if (clock) clock.textContent = now.hh;
+    if (label) label.textContent = name;
+    if (studioClock) studioClock.textContent = now.hh;
+    if (studioLabel) studioLabel.textContent = name;
+  }
+
+  /* Studio queue --------------------------------------------------------- */
+
+  function studioToken() {
+    try {
+      return window.sessionStorage.getItem(STORE_STUDIO) || '';
+    } catch (err) {
+      return '';
+    }
+  }
+
+  function rememberStudioToken(value) {
+    studio.token = value || '';
+    try {
+      if (value) window.sessionStorage.setItem(STORE_STUDIO, value);
+      else window.sessionStorage.removeItem(STORE_STUDIO);
+    } catch (err) {
+      /* A tab without storage can still use the queue for the current view. */
+    }
+  }
+
+  function setStudioStatus(key, tone) {
+    const status = $('[data-studio-status]');
+    studio.statusKey = key || '';
+    if (!status) return;
+    status.textContent = key ? t(key) : '';
+    status.className = 'form-status studio__status' + (tone ? ' is-' + tone : '');
+  }
+
+  function showBoard(show) {
+    const board = $('[data-studio-board]');
+    const leave = $('[data-studio-leave]');
+    const gate = $('.studio__gate');
+    if (board) board.hidden = !show;
+    if (leave) leave.hidden = !show;
+    if (gate) gate.hidden = show;
+    if (show) updateWallClock();
+  }
+
+  function studioAction(url, body) {
+    return window
+      .fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-studio-token': studio.token },
+        body: JSON.stringify(body || {}),
+      })
+      .then(function (response) {
+        return response.json().catch(function () {
+          return {};
+        }).then(function (payload) {
+          return { status: response.status, body: payload };
+        });
+      });
+  }
+
+  function buildStudioCard(item, index) {
+    const li = doc.createElement('li');
+    li.className = 'studio__item';
+    li.setAttribute('data-studio-id', item.id);
+    if (index === 0) li.classList.add('is-top');
+
+    const head = doc.createElement('p');
+    head.className = 'studio__item-head';
+
+    const name = doc.createElement('strong');
+    name.textContent = item.name;
+    head.appendChild(name);
+
+    const place = doc.createElement('span');
+    place.className = 'studio__item-place';
+    place.textContent = item.location;
+    head.appendChild(place);
+
+    const clock = doc.createElement('time');
+    clock.className = 'studio__item-time';
+    clock.textContent = eatClock(item.createdAt);
+    head.appendChild(clock);
+
+    const body = doc.createElement('p');
+    body.className = 'studio__item-text';
+    body.textContent = item.message;
+
+    const actions = doc.createElement('p');
+    actions.className = 'studio__item-actions';
+
+    function action(labelKey, tone, verb) {
+      const button = doc.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn--sm ' + tone;
+      button.textContent = t(labelKey);
+      button.addEventListener('click', function () {
+        review(verb, item.id);
+      });
+      actions.appendChild(button);
+    }
+
+    if (item.status === 'pending') {
+      action('studio.approveLabel', 'btn--accent', 'approve');
+      action('studio.rejectLabel', 'btn--ghost', 'reject');
+    } else {
+      const state = doc.createElement('span');
+      state.className = 'studio__item-state';
+      state.textContent = t(item.status === 'approved' ? 'studio.onWallTag' : 'studio.rejectedTag');
+      actions.appendChild(state);
+    }
+
+    action('studio.deleteLabel', 'btn--ghost btn--sm studio__danger', 'delete');
+
+    li.appendChild(head);
+    li.appendChild(body);
+
+    if (item.programme) {
+      const during = doc.createElement('p');
+      during.className = 'studio__item-during';
+      during.textContent = t('studio.sentDuring') + ' ' + item.programme;
+      li.appendChild(during);
+    }
+
+    li.appendChild(actions);
+    return li;
+  }
+
+  function renderStudio() {
+    const queue = $('[data-studio-queue]');
+    if (!queue) return;
+
+    queue.textContent = '';
+    studio.pending.forEach(function (item, index) {
+      queue.appendChild(buildStudioCard(item, index));
+    });
+
+    const empty = $('[data-studio-empty]');
+    if (empty) empty.hidden = studio.pending.length > 0;
+
+    const onWall = $('[data-studio-onwall]');
+    if (onWall) {
+      onWall.textContent = '';
+      studio.approved.forEach(function (item) {
+        onWall.appendChild(buildStudioCard(item, -1));
+      });
+    }
+
+    const wallEmpty = $('[data-studio-onwall-empty]');
+    if (wallEmpty) wallEmpty.hidden = studio.approved.length > 0;
+  }
+
+  function fetchStudio() {
+    if (doc.visibilityState === 'hidden') return Promise.resolve();
+    if (!studio.token) return Promise.resolve();
+
+    return window
+      .fetch('/api/studio', { headers: { 'x-studio-token': studio.token, accept: 'application/json' } })
+      .then(function (response) {
+        if (response.status === 401) {
+          studio.denied = true;
+          rememberStudioToken('');
+          showBoard(false);
+          setStudioStatus('');
+          const error = doc.getElementById('studio-token-error');
+          if (error) {
+            error.hidden = false;
+            error.textContent = t('studio.badCode');
+          }
+          return null;
+        }
+        if (response.status === 501) {
+          setStudioStatus('studio.offline', 'info');
+          return null;
+        }
+        if (!response.ok) throw new Error('status ' + response.status);
+        return response.json();
+      })
+      .then(function (payload) {
+        if (!payload) return;
+        studio.denied = false;
+        studio.loaded = true;
+        studio.pending = Array.isArray(payload.pending) ? payload.pending : [];
+        studio.approved = Array.isArray(payload.approved) ? payload.approved : [];
+        renderStudio();
+        if (studio.statusKey === 'studio.loading') setStudioStatus('');
+      })
+      .catch(function () {
+        setStudioStatus('studio.offline', 'info');
+      });
+  }
+
+  function review(verb, id) {
+    setStudioStatus('studio.working', 'info');
+
+    studioAction('/api/studio', { action: verb, id: id })
+      .then(function (outcome) {
+        if (outcome.status === 200) {
+          studio.pending = Array.isArray(outcome.body.pending) ? outcome.body.pending : [];
+          studio.approved = Array.isArray(outcome.body.approved) ? outcome.body.approved : [];
+          renderStudio();
+          setStudioStatus(
+            verb === 'approve' ? 'studio.approved' : verb === 'reject' ? 'studio.rejected' : 'studio.deleted',
+            'success'
+          );
+          return;
+        }
+        if (outcome.status === 401) {
+          rememberStudioToken('');
+          showBoard(false);
+          setStudioStatus('');
+          return;
+        }
+        setStudioStatus('studio.offline', 'error');
+      })
+      .catch(function () {
+        setStudioStatus('studio.offline', 'error');
+      });
+  }
+
+  function initStudioGate(form) {
+    if (form.dataset.studioBound) return;
+    form.dataset.studioBound = '1';
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const input = $('#studio-token', form);
+      const value = input.value.trim();
+      const error = doc.getElementById('studio-token-error');
+
+      if (!value) {
+        if (error) {
+          error.hidden = false;
+          error.textContent = t('studio.tokenRequired');
+        }
+        input.setAttribute('aria-invalid', 'true');
+        return;
+      }
+
+      if (error) error.hidden = true;
+      input.removeAttribute('aria-invalid');
+      rememberStudioToken(value);
+      showBoard(true);
+      setStudioStatus('studio.loading', 'info');
+      fetchStudio();
+    });
+
+    const leave = $('[data-studio-leave]', form);
+    if (leave) {
+      leave.addEventListener('click', function () {
+        rememberStudioToken('');
+        studio.pending = [];
+        studio.approved = [];
+        showBoard(false);
+        setStudioStatus('');
+      });
+    }
+  }
+
+  let studioKeysBound = false;
+
+  function initStudioKeys() {
+    if (studioKeysBound) return;
+    studioKeysBound = true;
+
+    doc.addEventListener('keydown', function (event) {
+      const board = $('[data-studio-board]');
+      if (!board || board.hidden || event.metaKey || event.ctrlKey || event.altKey) return;
+
+      const tag = event.target && event.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const top = studio.pending[0];
+      if (!top) return;
+
+      const key = event.key.toLowerCase();
+      if (key === 'a') {
+        event.preventDefault();
+        review('approve', top.id);
+      } else if (key === 'r') {
+        event.preventDefault();
+        review('reject', top.id);
+      } else if (key === 'd') {
+        event.preventDefault();
+        review('delete', top.id);
+      }
+    });
+  }
+
+  function initStudio(scope) {
+    const gate = $('[data-studio-gate-form]', scope);
+    if (!gate) return;
+
+    initStudioGate(gate);
+    initStudioKeys();
+
+    studio.token = studioToken();
+    if (studio.token) {
+      showBoard(true);
+      fetchStudio();
+    } else {
+      showBoard(false);
+    }
+
+    renderStudio();
+  }
+
   /* Boot ----------------------------------------------------------------- */
 
   function setYear() {
@@ -1980,6 +2646,24 @@
 
     initRouter();
     window.setInterval(updateNow, 15000);
+
+    /* The wall and the queue are polled, not pushed: a county station does not
+     * need a socket, and a few seconds is inside the pace of a live show. The
+     * poll is silent while the tab is hidden and refetches on the way back. */
+    window.setInterval(function () {
+      if ($('[data-wall]')) fetchWall();
+    }, WALL_POLL_MS);
+
+    window.setInterval(function () {
+      if ($('[data-studio-board]') && studio.token) fetchStudio();
+    }, STUDIO_POLL_MS);
+
+    window.addEventListener('visibilitychange', function () {
+      if (doc.visibilityState !== 'hidden') {
+        if ($('[data-wall]')) fetchWall();
+        if ($('[data-studio-board]') && studio.token) fetchStudio();
+      }
+    });
   }
 
   /* Bindings for the current page, re-run after every content swap. */
@@ -1996,6 +2680,8 @@
     bindPlayButtons(main);
     initShare(main);
     initPodcasts(main);
+    initWall(main);
+    initStudio(main);
     preselectTopic();
     applyLanguage(lang, false);
   }

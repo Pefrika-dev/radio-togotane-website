@@ -10,7 +10,7 @@ Everything that was not supplied or publicly published by the station is either 
 
 ## 1. What is included
 
-- **Home** — hero, live-listening panel, station facts, schedule preview, presenter preview, news preview, advertising band, community/events preview, an official-channels strip and a contact band.
+- **Home** — hero, live-listening panel, on-air message wall (§4.9), station facts, schedule preview, presenter preview, news preview, advertising band, community/events preview, an official-channels strip and a contact band.
 - **About** — an identity plate with the station's logo and its verified public channels, what the station publishes today, a photograph from the station's own public post, audience, principles and a visible list of information still to be supplied.
 - **Programs** — the published weekday, Saturday and Sunday schedule in tabs, an East Africa Time clock, current-programme highlighting and keyboard support.
 - **Listen back** — recordings of the online stream in hourly files, tagged with the programme that was published for that hour, with programme filters, a built-in player, seeking and honest empty/error states. One genuine four-minute clip is included; longer archives appear as the recorder runs.
@@ -19,9 +19,10 @@ Everything that was not supplied or publicly published by the station is either 
 - **Advertise** — the twelve advertising services, the four contact routes and a request-quote checklist, without invented prices, reach figures or guarantees.
 - **Announcements** — community categories, a submission form, review and privacy notices, and a clear statement that nothing is published automatically.
 - **Contact** — exact phone, on-air call-in, WhatsApp and email details, an international dialling note, a contact form, a card with the station's verified public channels and an honest note about the unpublished studio address.
+- **Studio queue** — `studio.html`, unlisted and `noindex`, where a presenter with the code reads, accepts, rejects or deletes the notes the wall receives (§4.9).
 - **404** — a branded not-found page served by the preview server.
 
-The site has no database, no analytics, no cookies and no third-party JavaScript.
+Apart from the message wall there is no database, no analytics, no cookies and no third-party JavaScript: the wall's notes live in Vercel KV and nothing else is persisted.
 
 Listening is continuous. The player dock sits outside the page content, so moving between pages does not stop the stream or a listen-back clip — the site fetches the next page, replaces only `<main>` and updates the address, title, description, navigation state and language in place. Only one sound plays at a time: starting the live stream pauses an archive clip, and starting a clip pauses the live stream. If the browser cannot fetch or parse the next page, or anything about it is unexpected, the link performs a normal page load instead, so navigation is never left half-done.
 
@@ -65,8 +66,12 @@ It reads the one configured `streamUrl`, follows the provider's redirect, sample
 ```
 radio-togotane/
 ├─ build.js                  # tiny static-site builder
-├─ server.js                 # local preview server with security headers
+├─ server.js                 # local preview server (also mocks /api/wall and /api/studio in memory)
 ├─ site.json                 # public site URL (empty until launch)
+├─ api/                      # Vercel serverless functions — the message wall only
+│  ├─ _lib/wall.js           # KV store access, validation, retention, rate limits
+│  ├─ wall.js                # listener endpoint: read the wall, submit, withdraw
+│  └─ studio.js              # presenter endpoint: queue, accept, reject, delete
 ├─ scripts/
 │  ├─ check.js               # build/output consistency checks
 │  └─ set-site-url.js        # writes site.json from a URL argument
@@ -108,6 +113,7 @@ radio-togotane/
 ├─ advertise.html
 ├─ announce.html
 ├─ contact.html
+├─ studio.html               # presenter queue — built noindex, absent from the sitemap
 ├─ 404.html
 ├─ robots.txt
 └─ sitemap.xml               # generated only when site.json has a URL
@@ -197,7 +203,9 @@ The week carries fifteen published programmes: five on each weekday (05:00–00:
 
 ### 4.6 Forms
 
-The announcement and contact forms validate on the client and then hand the completed message to **WhatsApp** or **email**. There is no backend and no database: nothing is stored by this website, and the page never claims that a submission reached the station. The success message says the message is ready to send and offers a direct link as a fallback. Connect a backend or form service later if the station wants submissions delivered automatically.
+The announcement and contact forms validate on the client and then hand the completed message to **WhatsApp** or **email**. Those two forms store nothing: the page never claims that a submission reached the station, the success message says the message is ready to send, and it offers a direct link as a fallback.
+
+The on-air **message wall** (§4.9) is the one part of the site that does use a backend, and it is the only place where listener data is stored.
 
 The contact form supports `contact.html?topic=advertising` (and the other topic values in the form) to preselect a subject, which is how the advertising page's quote links work.
 
@@ -239,6 +247,45 @@ The identity artwork is the station's own, taken from places it publishes:
 
 Replace any of these by dropping in a file of the same name and rebuilding. If the station supplies its own logo or higher-resolution portraits, prefer those: they are the rights-holders, and the site's copy already treats every image as supplied-by-station. Presenter cards that have no verified portrait keep a neutral monogram and a visible “photograph to be supplied” note — do not substitute a stock face for a named person.
 
+### 4.9 On-air message wall and studio queue
+
+While a programme is live the presenter asks “where are you listening from?”. Listeners answer on the homepage wall ([`src/pages/index.html`](src/pages/index.html), the `#wall` section) with a **name, a location and a short message**. Nothing reaches the public wall until a presenter accepts it, and every listener then sees the same accepted list.
+
+It is the only part of the site with a server side. Three files under [`api/`](api/) run as Vercel serverless functions:
+
+| File | Role |
+| --- | --- |
+| `api/_lib/wall.js` | shared store: read/write with optimistic locking (`CAS`), field limits, retention purge, rate limiting, delete-token digests |
+| `api/wall.js` | listener endpoint — `GET` the accepted list, `POST` a note, `POST {action:'delete'}` to withdraw one |
+| `api/studio.js` | presenter endpoint — the waiting queue, accept, reject, delete |
+
+The store is **Vercel KV (Upstash)**, driven over its REST interface with plain `fetch` so the project still installs no runtime dependencies.
+
+**Environment variables** (Settings → Environment Variables in the Vercel project):
+
+- `KV_REST_API_URL` and `KV_REST_API_TOKEN` — written when a KV store is attached to the project; the exact click path is in [§6 → Deployment](#deployment).
+- `STUDIO_TOKEN` — the code a presenter types once per browser tab to open the queue. Choose it yourself; treat it as a password;
+- `WALL_RETENTION_DAYS` — optional, default `30`.
+
+If any of these is missing the endpoints answer `501 {ok:false,error:'not-configured'}` and the pages say the wall is not connected instead of pretending. That is the state the site is in until the store is attached.
+
+**Moderation and safety**
+
+- a note is stored as `pending`; only `approved` notes are ever returned to listeners, newest 40;
+- the studio queue is token-gated, and the code is compared with `crypto.timingSafeEqual`;
+- a hidden honeypot field (`website`) rejects bot submissions, and free text is stripped of control characters and clamped to 40/60/240 characters;
+- five submissions per minute per client IP, one hundred and twenty queue actions per minute;
+- content is written with `textContent`, never as HTML, so a note cannot inject markup;
+- each accepted note carries a sha256 digest of a one-time secret that is returned to the submitting tab only; the tab keeps it in `sessionStorage` and can withdraw its own note, before or after approval. Losing the tab loses the withdrawal link — the presenter can still delete it from the queue.
+
+**Data protection.** Under the Kenya Data Protection Act the wall processes personal data (a name and a location), so: the form asks for explicit consent before sending, the privacy line states that accepted notes are deleted after 30 days at the latest, the submitting listener can remove their own note, and a presenter can delete any note immediately. `server.js` keeps test notes in memory only, and nothing is written to logs. If the station is asked to erase a named listener's note and the tab secret is gone, delete it from the studio queue.
+
+**Local preview.** `node server.js` serves the same two endpoints from memory so the feature can be exercised without a store — `http://127.0.0.1:4173`, presenter code `dev-studio-token` (or whatever `STUDIO_TOKEN` is set to). Notes vanish when the process stops. `WALL_DEV=0 node server.js` reproduces the unconfigured `501` behaviour. Production never runs `server.js`.
+
+**Presenter screen.** [`studio.html`](studio.html) is built with `noindex, nofollow`, is absent from the sitemap, carries no canonical or social metadata, and is not linked from the navigation — anyone with the URL still needs the code. Keyboard shortcuts act on the top note: `A` accept, `R` reject, `D` delete.
+
+**Limits of what is claimed.** The wall shows the programme name and clock from the *published schedule*, so the “on air” label is only as accurate as `data.js`. The queue refreshes every three seconds and the public wall every four while the tab is visible; a hidden tab pauses and refetches when it is shown again.
+
 ---
 
 ## 5. Information still required from the station
@@ -259,6 +306,7 @@ The station has adopted the site and publishes it in its own voice, so no approv
 12. Permission to make stream recordings available on demand, and a retention period for the archive (see §4.7).
 13. A machine that can run the recorder continuously, or agreement on how the archive will be hosted.
 14. A decision on keeping the station's broadcast source connected to its Zeno mount. The mount was heard to be silent at 09:19 EAT and carrying the live 128 kbps programme at 09:33 EAT the same morning (§4.1); while it is cold, every player on the internet fails identically, including the station's own pages. `node tools/check-stream.js --watch` produces the evidence.
+15. For the on-air message wall: attach a Vercel KV store to the project and set a presenter code in `STUDIO_TOKEN` (§4.9). Until both are done the hosted wall reports that it is not connected, which is the honest state rather than a fault. The station also needs to decide who holds the code and how long notes stay on the wall beyond the 30-day maximum.
 
 The “Johnes Mairari may present Tabataba on some occasions” detail is stated as a possibility, not as a fixed pairing with Terry Rhobi.
 
@@ -289,6 +337,14 @@ Then:
 ### Deployment
 
 The built site is plain static files. Deploy the generated root HTML files, `assets/` (including `assets/data/episodes.json`), `media/`, `robots.txt` and (when generated) `sitemap.xml` and `podcast.xml` to any static host — Netlify, Cloudflare Pages, GitHub Pages, Vercel, or the station's own server. Do **not** upload `src/`, `scripts/`, `tools/`, `server.js`, `build.js`, `package.json`, the README or temporary folders.
+
+**The message wall is the exception**: it needs a host that runs the `api/` functions. Vercel does (that is where the site is deployed); a purely static host does not, and there the wall reports “not connected” — the homepage hides the form and shows the offline notice rather than claiming notes were sent. On Vercel, three environment variables must be set (dashboard → your project → **Settings → Environment Variables → Add**):
+
+1. Attach a store: in the Vercel dashboard open the project and look for **Storage** (on accounts without it, **Marketplace** in the left-hand navigation). Add a **KV** store — Vercel's own KV integration, or the Upstash store listed in the Marketplace, either works. Confirm the integration when Vercel asks it to link the store to this project; that linking step is what writes `KV_REST_API_URL` and `KV_REST_API_TOKEN` into **Settings → Environment Variables**. If those two names are not present afterwards, add them manually from the store's own Details page (Copy value) — the endpoint names are exactly `KV_REST_API_URL` and `KV_REST_API_TOKEN`, and `api/_lib/wall.js` looks for nothing else.
+2. Add `STUDIO_TOKEN` by hand with **Build & Deployment Protection** kept on — the presenter code, e.g. a random phrase only the studio knows. Anyone with this code plus the `studio.html` address can accept notes onto the public wall, so treat it as a password and change it if it spreads.
+3. Optionally add `WALL_RETENTION_DAYS` (default `30`).
+
+Then **Deployments → latest → ⋯ → Promote to Production** as usual, or push to `main`, and check `https://radio-togotane-website.vercel.app/api/wall`: it should answer `{"ok":true,…}`. If it still answers `{"ok":false,"error":"not-configured"}`, the variables are missing or were not applied to Production — after changing them, trigger a redeploy so the functions pick them up.
 
 If the host runs a build step, use `node build.js` with the project root as the publish directory. If it serves files directly, build locally and upload the outputs.
 
@@ -360,6 +416,9 @@ The local preview server already sends the first four headers. Google Maps is li
   - the Lucas Magesa presenter card shows the station-published portrait with its credit line, while every other card keeps a monogram and a pending note;
   - the About “From the studio” photograph loads lazily, carries a translated alt string and a “Station photograph” caption;
   - 404 page renders with navigation and footer.
+- **Message wall and studio queue, tested against the in-memory endpoints in `server.js` on 2026-11-01.** Twenty-six contract checks passed: an empty wall returns `200` with `Cache-Control: no-store`; a note without consent is refused (`400 consent-required`); a missing name or location is refused (`400 fields-required`); a 500-character message is stored clamped to 240; a filled honeypot is refused (`400 rejected`) and never stored; a submitted note is `pending` and **absent from the public list** until accepted; a wrong or missing studio token gives `401`; accept puts the note on the wall and reject removes it from the queue with neither ever appearing unapproved; the public view carries no `secret`/`secretHash`; the owning tab deletes its own note, a wrong secret cannot (`404`/`403`); an unknown id gives `404`; the sixth note in a minute is refused (`429 too-many`); malformed JSON fails as `400`, not `500`.
+- In the browser, with the real interface: the empty form shows four inline field errors plus a summary and sends nothing; a valid note reports “Sent. Waiting for the presenter”, resets the fields and the counter, and reveals the withdraw control; the studio gate opens the queue only for the right code, stamps the top note with the EAT clock and the programme it was sent during, and `A`/`R`/`D` accept, reject and delete it with the matching status line; an accepted note then renders in every listener's wall, and a note sent by another session renders **without** a withdraw control; the wall repaints on an EN/SW switch and in the light theme; with the store switched off (`WALL_DEV=0`) both endpoints answer `501`, the homepage hides the form and feed and states that the wall is not connected, and the queue says it is not connected instead of showing an empty list. `studio.html` was confirmed `noindex, nofollow`, with no canonical, no structured data and no link to it from the navigation.
+- Console stayed clean throughout, no audio element is created and the player still reads “Ready — press play to listen” after every wall interaction (no autoplay was introduced), and the player volume now defaults to maximum — verified in a clean profile where `#volume` starts at `100`, while a listener who has moved the slider keeps their own saved level.
 - SEO with the Pages address configured: canonical tags, Open Graph URLs and a 9-page `sitemap.xml` are written on every build. `podcast.xml` is only written by the recorder, and only while a real URL is set.
 
 ---
@@ -371,7 +430,10 @@ The local preview server already sends the first four headers. Google Maps is li
 - **Live means the same relay, not sample-exact sync** — every listener is served one continuous stream by the provider, so two phones pressed at the same moment hear the same programme and the same words (§4.1). Each device still buffers and decodes on its own, so playback positions differ by a fraction of a second, and a phone that starts later is further behind until it catches up at the live edge. There is no backend clock that could force two devices to align, and none is claimed.
 - **Archive depends on the recorder** — only hours captured while `tools/record.js` is running appear on the Listen back page. The included archive is one genuine 4 min 09 s demonstration clip, not a complete day; gaps are left as gaps. Continuous capture needs an always-on machine, storage space (about 1.4 GB per day at 128 kbps) and a retention decision.
 - **Recording rights unconfirmed** — on-demand recordings of a live stream can include music and advertising licensed only for broadcast. The station must confirm the right to publish them before the archive goes public.
-- **No backend** — forms hand off to WhatsApp or email; the website does not store or deliver submissions itself.
+- **Message wall needs a store before it works** — the wall and the studio queue are built and tested against the local preview, but on the hosted site they stay disconnected until a Vercel KV store is attached and `KV_REST_API_URL`, `KV_REST_API_TOKEN` and `STUDIO_TOKEN` are set (§4.9). Until then the endpoints return `501`, the homepage hides the form and says the wall is not connected, and no listener note is stored or shown anywhere.
+- **Wall moderation is manual** — a presenter has to be at `studio.html` with the code for notes to be accepted; between programmes, or if nobody is on the queue, the wall simply does not fill up. The queue refreshes on a timer, not a live push, so an accepted note reaches other listeners a few seconds later.
+- **Withdrawal needs the original tab** — the delete secret is held only in that listener's `sessionStorage` and shown once. Closing the tab or using another device removes the self-service option; a presenter can still delete the note.
+- **No backend for the other forms** — the contact and announcement forms still hand off to WhatsApp or email; the website does not store or deliver those submissions itself.
 - **Continuous listening needs JavaScript** — pages are swapped in place only when the browser supports `fetch`, the History API and `DOMParser`; every other visitor gets ordinary page loads, and in that case the stream restarts when the page changes. There is no service worker keeping audio alive across a hard reload, and adding one is a deliberate next step rather than an assumption. The JSON-LD block belongs to the page first loaded, so a crawler or a manually reloaded page always reads the server-rendered file for that URL.
 - **Sample content** — news stories are layout samples, clearly labelled. Events are empty until confirmed.
 - **Presenter images and bios** — one portrait (Lucas Magesa) comes from the station's own public post; the other six cards keep neutral monograms and pending notes, and no biography has been written for anyone. No real presenter photograph or biography was invented.

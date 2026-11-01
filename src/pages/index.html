@@ -82,6 +82,69 @@ bodyClass: page-home
     </div>
   </section>
 
+  <section class="section section--rule wall" id="wall" aria-labelledby="wall-title" data-wall>
+    <div class="container wall__grid">
+      <div class="wall__form-col">
+        <p class="eyebrow" data-i18n="wall.eyebrow">Where are you listening from?</p>
+        <h2 class="section__title" id="wall-title" data-i18n="wall.title">Send the desk a note while the programme is on air.</h2>
+        <p class="section__lead" data-i18n="wall.lead">Give the presenter your name, where you are and what you would like to say. A presenter reads notes out after accepting them, and every listener sees the same accepted list on this page.</p>
+        <p class="wall__onair"><span data-i18n="wall.onairPrefix">On air in Nairobi</span> <time data-wall-clock>--:--</time> EAT · <span data-wall-programme data-i18n="wall.offAir">Between programmes</span></p>
+
+        <form class="form wall__form" id="wall-form" data-wall-form novalidate>
+          <div class="form__grid">
+            <div class="field">
+              <label for="wall-name"><span data-i18n="wall.nameLabel">Your name</span> <span class="req" aria-hidden="true">*</span></label>
+              <input id="wall-name" name="name" type="text" maxlength="40" required autocomplete="name" aria-describedby="wall-name-error">
+              <p class="field__error" id="wall-name-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="wall-location"><span data-i18n="wall.locationLabel">Where you are listening from</span> <span class="req" aria-hidden="true">*</span></label>
+              <input id="wall-location" name="location" type="text" maxlength="60" required autocomplete="address-level2" aria-describedby="wall-location-error">
+              <p class="field__error" id="wall-location-error" hidden></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="wall-message"><span data-i18n="wall.messageLabel">Your message</span> <span class="req" aria-hidden="true">*</span></label>
+            <textarea id="wall-message" name="message" rows="3" maxlength="240" required aria-describedby="wall-message-error wall-message-count"></textarea>
+            <p class="field__hint" id="wall-message-count"><span data-wall-count>0</span> / 240</p>
+            <p class="field__error" id="wall-message-error" hidden></p>
+          </div>
+
+          <div class="field">
+            <label class="check" for="wall-consent">
+              <input type="checkbox" id="wall-consent" name="consent" required aria-describedby="wall-consent-error">
+              <span><span data-i18n="wall.consent">I agree that the station may read this out on air and show it here with my name and location.</span> <span class="req" aria-hidden="true">*</span></span>
+            </label>
+            <p class="field__error" id="wall-consent-error" hidden></p>
+          </div>
+
+          <div class="field field--hp">
+            <label for="wall-website">Leave this empty</label>
+            <input id="wall-website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <p class="wall__privacy" data-i18n="wall.privacy">Nothing appears on the wall until a presenter accepts it. Accepted notes stay listed while the programme runs and are deleted after 30 days at the latest.</p>
+
+          <div class="form__actions">
+            <button type="submit" class="btn btn--accent" data-wall-submit data-i18n="actions.sendToPresenter">Send to the presenter</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-wall-remove hidden data-i18n="actions.removeMine">Remove my message</button>
+          </div>
+
+          <p class="form-status" data-wall-status role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <div class="wall__feed-col">
+        <h3 class="wall__feed-title" data-i18n="wall.feedTitle">Listeners the presenter has accepted.</h3>
+        <ul class="wall__feed" data-wall-feed></ul>
+        <p class="wall__empty" data-wall-empty data-i18n="wall.empty">No accepted notes yet. The first one the presenter accepts appears here for every listener.</p>
+        <p class="wall__offline" data-wall-offline hidden data-i18n="wall.offline">The message wall is not connected yet, so notes cannot be sent or shown. This page does not pretend otherwise.</p>
+        <p class="wall__call" data-i18n="wall.callInstead">Prefer to speak? Call 0757 192 999 while the programme is on air.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="section section--rule about-strip" aria-labelledby="about-title">
     <div class="container about-strip__grid">
       <div class="about-strip__copy">

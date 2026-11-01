@@ -1,0 +1,54 @@
+---
+title: Studio — On-air message queue
+description: The presenter's queue for listener notes received while a programme is on air. Accepting a note publishes it to the wall; rejecting or deleting it keeps it off.
+page: studio
+bodyClass: page-studio
+noindex: true
+---
+<main id="main">
+  <header class="page-hero page-hero--compact">
+    <div class="container page-hero__inner">
+      <p class="eyebrow" data-i18n="studio.eyebrow">Studio</p>
+      <h1 class="page-hero__title" data-i18n="studio.title">The listener queue, in order.</h1>
+      <p class="page-hero__lead" data-i18n="studio.lead">Notes arrive here before anyone sees them. Accept one to put it on the public wall, reject it to keep it off, delete it to remove it from the station's store.</p>
+    </div>
+  </header>
+
+  <section class="section studio__gate" aria-labelledby="gate-title">
+    <div class="container studio__gate-inner">
+      <h2 class="section__title" id="gate-title" data-i18n="studio.gateTitle">Presenter access.</h2>
+      <p class="muted" data-i18n="studio.gateBody">Enter the studio code the station gave you. It is checked on every request and is kept only for this browser tab.</p>
+      <form class="form studio__gate-form" id="studio-gate-form" data-studio-gate-form novalidate>
+        <div class="field">
+          <label for="studio-token"><span data-i18n="studio.tokenLabel">Studio code</span> <span class="req" aria-hidden="true">*</span></label>
+          <input id="studio-token" name="token" type="password" required autocomplete="off" aria-describedby="studio-token-error">
+          <p class="field__error" id="studio-token-error" hidden></p>
+        </div>
+        <div class="form__actions">
+          <button type="submit" class="btn btn--accent" data-i18n="actions.unlockQueue">Open the queue</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-studio-leave hidden data-i18n="actions.lockQueue">Close the queue</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section section--rule studio__board" id="studio-board" aria-labelledby="board-title" data-studio-board hidden>
+    <div class="container">
+      <div class="section__head section__head--stack">
+        <h2 class="section__title" id="board-title" data-i18n="studio.boardTitle">Waiting for the presenter.</h2>
+        <p class="muted"><span data-i18n="studio.nowOnair">On air now</span>: <strong data-studio-programme data-i18n="wall.offAir">Between programmes</strong> · <time data-studio-clock>--:--</time> EAT · <span data-i18n="studio.autoRefresh">refreshes every 3 seconds</span></p>
+      </div>
+
+      <p class="form-status studio__status" role="status" aria-live="polite" data-studio-status></p>
+
+      <ul class="studio__queue" data-studio-queue></ul>
+      <p class="empty-state__body studio__empty" data-studio-empty data-i18n="studio.empty">Nothing waiting. Notes a listener sends appear here within a few seconds.</p>
+
+      <h3 class="studio__sub" data-i18n="studio.onWallTitle">On the wall now.</h3>
+      <ul class="studio__onwall" data-studio-onwall></ul>
+      <p class="empty-state__body studio__empty" data-studio-onwall-empty data-i18n="studio.onWallEmpty">Nothing published yet.</p>
+
+      <p class="muted studio__keys" data-i18n="studio.keys">Keys: A accepts the top note, R rejects it, D deletes it.</p>
+    </div>
+  </section>
+</main>
