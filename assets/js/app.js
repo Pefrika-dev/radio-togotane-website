@@ -28,6 +28,7 @@
     podcasts: 'title.podcasts',
     presenters: 'title.presenters',
     news: 'title.news',
+    'kuria-night': 'title.event',
     advertise: 'title.advertise',
     announce: 'title.announce',
     contact: 'title.contact',
@@ -453,11 +454,45 @@
 
     updateTuneIn(now, current);
     updateWallClock();
+    updateEventCountdown();
 
     const dockNow = $('#dock-now');
     if (dockNow) {
       dockNow.textContent = current ? current.name + ' · ' + formatRange(current) : t('schedule.offAirTitle');
     }
+  }
+
+  /* The event page counts down to the start printed in its own <time> element,
+   * so the copy and the timer can never drift apart. After the night has passed
+   * it says so instead of showing a negative count. */
+  function updateEventCountdown() {
+    const box = $('[data-event-count]');
+    const start = $('[data-event-start]');
+    if (!box || !start) return;
+
+    const label = $('[data-event-count-label]', box);
+    const value = $('[data-event-count-value]', box);
+    const at = Date.parse(start.getAttribute('datetime'));
+    if (!label || !value || isNaN(at)) return;
+
+    const ms = at - Date.now();
+    const labelKey = ms <= 0 ? (ms > -6 * 3600 * 1000 ? 'event.countLive' : 'event.countPast') : 'event.countPrefix';
+    label.setAttribute('data-i18n', labelKey);
+    label.textContent = t(labelKey);
+
+    if (ms <= 0) {
+      value.textContent = '';
+      return;
+    }
+
+    const totalMinutes = Math.floor(ms / 60000);
+    const days = Math.floor(totalMinutes / 1440);
+    const hours = Math.floor((totalMinutes % 1440) / 60);
+    const parts = [];
+    if (days) parts.push(days + ' ' + t('event.abbrDays'));
+    parts.push(hours + ' ' + t('event.abbrHours'));
+    parts.push((totalMinutes % 60) + ' ' + t('event.abbrMins'));
+    value.textContent = parts.join(' · ');
   }
 
   function initTabs(scope) {
@@ -1664,16 +1699,18 @@
     done(t('share.failed'));
   }
 
-  function shareSite() {
+  function shareSite(button) {
     const url = window.location.href.split('#')[0];
     const status = $('#share-status');
+    const textKey = button && button.getAttribute('data-share-text');
+    const text = textKey ? t(textKey) : t('share.siteText');
     function report(message) {
       if (status) status.textContent = message;
     }
 
     if (navigator.share) {
       navigator
-        .share({ title: doc.title, text: t('share.siteText'), url: url })
+        .share({ title: doc.title, text: text, url: url })
         .then(function () {
           report(t('share.shared'));
         })
@@ -1688,7 +1725,9 @@
 
   function initShare(scope) {
     $$('.js-share', scope).forEach(function (button) {
-      button.addEventListener('click', shareSite);
+      button.addEventListener('click', function () {
+        shareSite(button);
+      });
     });
   }
 
@@ -1842,7 +1881,7 @@
    */
 
   const DIRECTORY = window.location.pathname.replace(/[^/]*$/, '');
-  const PAGE_NAMES = ['about', 'programs', 'podcasts', 'presenters', 'news', 'advertise', 'announce', 'contact', 'studio'];
+  const PAGE_NAMES = ['about', 'programs', 'podcasts', 'presenters', 'news', 'advertise', 'announce', 'contact', 'studio', 'kuria-night'];
   const canRoute = Boolean(window.fetch && window.history && window.history.pushState && window.DOMParser);
 
   let currentPage = '';

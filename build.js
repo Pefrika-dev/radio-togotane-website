@@ -64,7 +64,7 @@ for (const file of pages) {
   const canonical = absolute ? `<link rel="canonical" href="${escapeAttr(absolute)}">` : '';
   const ogUrl = absolute ? `<meta property="og:url" content="${escapeAttr(absolute)}">` : '';
   const ogImage = absolute
-    ? `<meta property="og:image" content="${escapeAttr(`${siteUrl}/assets/images/hero-studio-1200.jpg`)}">`
+    ? `<meta property="og:image" content="${escapeAttr(`${siteUrl}/${meta.ogImage || 'assets/images/hero-studio-1200.jpg'}`)}">`
     : '';
   const robots = isPrivate ? '<meta name="robots" content="noindex, nofollow">' : '';
 

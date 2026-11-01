@@ -2,7 +2,7 @@
 
 A complete, dependency-free website for **Radio Togotane 88.3 FM**, Kehancha, Migori County, Kenya. It was built as a design proposal and the station has since approved it as its own site, so the pages speak as Radio Togotane; the only builder attribution is one linked design-and-development credit in the site footer. The site is built as static HTML, CSS and vanilla JavaScript, with a bilingual English/Kiswahili interface, a persistent light/dark theme, a published programme schedule, a live player connected to the station's online stream, an automatic listen-back archive of recent broadcast hours, presenter and news layouts, advertising and community-announcement pages, and a contact page. It carries the station's own logo and its verified public channels.
 
-Everything that was not supplied or publicly published by the station is either omitted or clearly marked as pending. No presenters' biographies, news stories, events, social profiles, audience figures, awards, coverage claims or advertising rates have been invented.
+Everything that was not supplied or publicly published by the station is either omitted or clearly marked as pending. No presenters' biographies, news stories, social profiles, audience figures, awards, coverage claims or advertising rates have been invented. The one event on the site is published from the station's own poster (§4.10), and the parts the poster does not state are named as unpublished on the page.
 
 **Live site:** <https://radio-togotane-website.vercel.app> — this is the canonical address, and every canonical tag, Open Graph URL and `sitemap.xml` entry points here. The same build is also served at <https://pefrika-dev.github.io/radio-togotane-website/> as a mirror; its pages carry canonical tags to Vercel, so search engines credit one address only. The station's own domain can replace it at any time by running `npm run seo -- https://your-domain`, rebuilding and redeploying.
 
@@ -10,16 +10,17 @@ Everything that was not supplied or publicly published by the station is either 
 
 ## 1. What is included
 
-- **Home** — hero, live-listening panel, on-air message wall (§4.9), station facts, schedule preview, presenter preview, news preview, advertising band, community/events preview, an official-channels strip and a contact band.
+- **Home** — hero, live-listening panel, on-air message wall (§4.9), station facts, schedule preview, presenter preview, news preview, advertising band, the confirmed Kuria Night event card (§4.10), an official-channels strip and a contact band.
 - **About** — an identity plate with the station's logo and its verified public channels, what the station publishes today, a photograph from the station's own public post, audience, principles and a visible list of information still to be supplied.
 - **Programs** — the published weekday, Saturday and Sunday schedule in tabs, an East Africa Time clock, current-programme highlighting and keyboard support.
 - **Listen back** — recordings of the online stream in hourly files, tagged with the programme that was published for that hour, with programme filters, a built-in player, seeking and honest empty/error states. One genuine four-minute clip is included; longer archives appear as the recorder runs.
 - **Presenters** — the seven named presenters, one portrait taken from the station's own public post, neutral placeholders instead of invented portraits or biographies, and the separately named news team with roles marked as unconfirmed.
-- **News** — category filters, a featured sample card, sample story cards and an accessible article dialog. Every sample is labelled as a sample.
+- **News** — category filters, a featured sample card, sample story cards and an accessible article dialog, plus the one confirmed event listed as a real card and a full entry. Every sample is still labelled as a sample.
 - **Advertise** — the twelve advertising services, the four contact routes and a request-quote checklist, without invented prices, reach figures or guarantees.
 - **Announcements** — community categories, a submission form, review and privacy notices, and a clear statement that nothing is published automatically.
 - **Contact** — exact phone, on-air call-in, WhatsApp and email details, an international dialling note, a contact form, a card with the station's verified public channels and an honest note about the unpublished studio address.
 - **Studio queue** — `studio.html`, unlisted and `noindex`, where a presenter with the code reads, accepts, rejects or deletes the notes the wall receives (§4.9).
+- **Event page** — `kuria-night.html`, the first published event: the station's own poster, the date, venue, three ticket tiers, the M-PESA till, the two booking numbers, a countdown to the start and `Event` structured data (§4.10).
 - **404** — a branded not-found page served by the preview server.
 
 Apart from the message wall there is no database, no analytics, no cookies and no third-party JavaScript: the wall's notes live in Vercel KV and nothing else is persisted.
@@ -92,6 +93,7 @@ radio-togotane/
 │  ├─ images/                # station logo, illustrative studio photography
 │  │  ├─ logo-togotane.png       # full logo published by the station
 │  │  ├─ logo-togotane-mark.png  # cropped emblem used in the header/footer
+│  │  ├─ events/                 # event posters supplied by the station (webp + share jpg)
 │  │  ├─ presenters/             # portraits from the station's own posts
 │  │  └─ studio/                 # photographs from the station's own posts
 │  ├─ data/
@@ -113,6 +115,7 @@ radio-togotane/
 ├─ advertise.html
 ├─ announce.html
 ├─ contact.html
+├─ kuria-night.html          # the confirmed Kuria Night event page
 ├─ studio.html               # presenter queue — built noindex, absent from the sitemap
 ├─ 404.html
 ├─ robots.txt
@@ -243,7 +246,10 @@ The identity artwork is the station's own, taken from places it publishes:
 - `assets/images/logo-togotane.png` — the full logo as the station publishes it on its stream profile and YouTube channel avatar;
 - `assets/images/logo-togotane-mark.png` — the same emblem cropped to the roundel only, used in the header and footer brand tiles;
 - `assets/images/presenters/lucas-magesa.webp` — portrait cropped from the station's own “Omogeka Show With Lucas Magesa” post, which names the presenter on the graphic itself;
-- `assets/images/studio/togotane-studio-1.webp` — a photograph published on the station's official Facebook page, shown in the About “From the studio” section with a credit line.
+- `assets/images/studio/togotane-studio-1.webp` — a photograph published on the station's official Facebook page, shown in the About “From the studio” section with a credit line;
+- `assets/images/events/kuria-night-poster-1200.webp` (plus a 640 px version for cards) — the Kuria Night poster supplied by the station on 2026-11-01, reduced from a 3.3 MB PNG to 295 KB / 129 KB. A JPEG copy exists only for `og:image`, because link-preview crawlers handle JPEG more reliably than WebP.
+
+The event poster shows identifiable people. It is the station's own published artwork, so the station — not this repository — is the party that must be satisfied that those pictured agreed to it.
 
 Replace any of these by dropping in a file of the same name and rebuilding. If the station supplies its own logo or higher-resolution portraits, prefer those: they are the rights-holders, and the site's copy already treats every image as supplied-by-station. Presenter cards that have no verified portrait keep a neutral monogram and a visible “photograph to be supplied” note — do not substitute a stock face for a named person.
 
@@ -286,6 +292,26 @@ If any of these is missing the endpoints answer `501 {ok:false,error:'not-config
 
 **Limits of what is claimed.** The wall shows the programme name and clock from the *published schedule*, so the “on air” label is only as accurate as `data.js`. The queue refreshes every three seconds and the public wall every four while the tab is visible; a hidden tab pauses and refetches when it is shown again.
 
+### 4.10 Confirmed event — Togotane Cultural Kuria Night
+
+[`kuria-night.html`](kuria-night.html) is the first published event and the first real content on the News page. Every fact on it comes from the station's own poster, supplied on 2026-11-01 and stored in `assets/images/events/`:
+
+| Field | Published value | Source |
+| --- | --- | --- |
+| Event | Togotane Cultural Kuria Night — *Engamba Yu Umukuria* | poster title |
+| Date | Friday, 18 December 2026 (checked: 18 December 2026 is a Friday) | poster |
+| Time | 6:00 PM till late | poster |
+| Venue | The Hood Hotel, Kehancha | poster |
+| Tickets | Regular KSh 500 · VIP KSh 1,000 · VVIP KSh 2,000 | poster |
+| Payment | Lipa na M-PESA till number 1799374 | poster |
+| Contacts | Terry Rhobi 0728 700 802 · Malenga Wakilimanjaro 0742 041 361 | poster |
+
+What the poster does **not** say is kept off the page and named as pending on it: performer names, running order, doors time, table or meal arrangements and any age limit. The ticket tiers are printed with prices only — no benefit is described for VIP or VVIP because none is published. The two contact numbers are linked as `tel:` calls; the poster does not say they receive WhatsApp, so no `wa.me` link is made, and the station's own WhatsApp number is not attached to ticket sales.
+
+**How the parts work.** The countdown reads the start from the page's own `<time datetime="2026-12-18T18:00+03:00">`, so the copy and the timer cannot drift apart; it counts in days/hours/minutes, says “the night is under way” for six hours after the start and then “this event took place on…”. It is driven by the existing 15-second schedule tick, not a new timer. `build.js` takes an optional `ogImage:` line in a page's front matter, so this page's social preview is the poster (kept as a JPEG because link-preview crawlers handle JPEG more reliably than the WebP the page itself loads). The share button passes `data-share-text`, so sharing this page sends the event summary and this URL rather than the generic station line. `Event` JSON-LD carries the date, venue and three priced offers alongside the site-wide `RadioStation` block.
+
+**After the night.** Delete the page, or keep it as a record and let the countdown say it happened. If it is kept, remove the homepage card and the News listing so nothing reads as upcoming.
+
 ---
 
 ## 5. Information still required from the station
@@ -295,7 +321,7 @@ The station has adopted the site and publishes it in its own voice, so no approv
 1. Confirmation that the connected stream feed (`https://stream.zeno.fm/1dahxtvjx47vv`) is the station's authorised address.
 2. Presenter names for the eight Saturday-afternoon and Sunday programmes now listed.
 3. Photographs and short biographies for the six presenters still shown with monogram placeholders.
-4. Confirmed news stories and events.
+4. Confirmed news stories. The first confirmed event is published (§4.10); its performer line-up, running order, doors time and any age limit are still to be supplied.
 5. Confirmation of the three public channels now linked (Facebook, YouTube, X), plus official Instagram/TikTok handles if they exist.
 6. Exact studio address and office hours (only Kehancha, Migori County is published).
 7. Confirmed advertising packages or rates, if the station offers them.
@@ -325,12 +351,12 @@ npm run check
 Then:
 
 1. Confirm the stream still plays from the deployed domain (the CSP in §6 must allow the Zeno hosts).
-2. Replace sample news cards and the empty events state with confirmed content, or leave them labelled as samples.
+2. Replace the remaining sample news cards with confirmed reporting, or leave them labelled as samples. The Kuria Night card and its event page are already real content (§4.10).
 3. Add the remaining presenter photographs and bios once supplied (§4.8).
 4. Add the presenter names for the weekend programmes now listed, as the station supplies them.
 5. Confirm the three linked channels and add any other official profiles to `config.js` (§4.3).
 6. Confirm recording rights and a retention period before publishing the archive (§4.7).
-7. Verify the site in Google Search Console against the **exact deployed URL prefix** — `https://radio-togotane-website.vercel.app/` — using the **HTML tag** method. [src/layout.html](src/layout.html) already carries `<meta name="google-site-verification">` on all ten pages, and both hosts serve it. A *Domain* property cannot be verified from this project: it asks for a DNS TXT record on a zone the repository does not control, and the HTML-file method needs Google's own `google….html` upload placed at the same path prefix.
+7. Verify the site in Google Search Console against the **exact deployed URL prefix** — `https://radio-togotane-website.vercel.app/` — using the **HTML tag** method. [src/layout.html](src/layout.html) already carries `<meta name="google-site-verification">` on all twelve built pages, and both hosts serve it. A *Domain* property cannot be verified from this project: it asks for a DNS TXT record on a zone the repository does not control, and the HTML-file method needs Google's own `google….html` upload placed at the same path prefix.
 8. Submit **Sitemaps → `sitemap.xml`** on that same Vercel property. A sitemap only counts for the host and prefix it is read from: while `siteUrl` was the Pages address, submitting the file from either host produced “URL not allowed for a Sitemap at this location” on the other one. After changing `siteUrl` with `npm run seo`, rebuild and let the new `sitemap.xml` deploy before resubmitting.
 7. Rebuild and test the deployed copy.
 
@@ -372,11 +398,11 @@ The local preview server already sends the first four headers. Google Maps is li
 
 ## 7. Tests performed
 
-- `node build.js` — 10 pages built (9 public pages plus 404) and `sitemap.xml` regenerated with 9 entries for the configured Pages address.
-- `node scripts/check.js` — PASS: 401 markup keys, 56 dynamic keys, 10 built pages, 486 strings per language, no broken local links or missing labels, and every built page present in the player's in-page navigation list (a page it does not know would silently stop the stream).
+- `node build.js` — 12 pages built (10 public pages, plus 404 and the unlisted `studio.html`) and `sitemap.xml` regenerated with 10 entries for the configured URL.
+- `node scripts/check.js` — PASS: 480 markup keys, 68 dynamic keys, 12 built pages, 603 strings per language, no broken local links or missing labels, and every built page present in the player's in-page navigation list (a page it does not know would silently stop the stream).
 - `node --check` — `app.js`, `i18n.js`, `config.js`, `data.js`, `server.js`, `tools/record.js`, `tools/check-stream.js`.
-- Browser testing at 390 px and 539 px mobile viewports and a 1440 px desktop capture:
-  - no horizontal overflow on any of the ten pages at mobile width, or in a 1440 px-wide desktop frame;
+- Browser testing at 390 px and 539 px mobile viewports and a 1440 px desktop capture (the event page was measured at 531 px — see its own bullet below):
+  - no horizontal overflow on any of the ten pages covered by that capture, at mobile width or in a 1440 px-wide desktop frame;
   - all local image references resolve and load; below-the-fold photographs use native lazy loading;
   - mobile menu opens, traps focus in the dialog, closes and returns focus;
   - light/dark toggle changes colours, updates `theme-color` and persists across reloads;
@@ -419,7 +445,8 @@ The local preview server already sends the first four headers. Google Maps is li
 - **Message wall and studio queue, tested against the in-memory endpoints in `server.js` on 2026-11-01.** Twenty-six contract checks passed: an empty wall returns `200` with `Cache-Control: no-store`; a note without consent is refused (`400 consent-required`); a missing name or location is refused (`400 fields-required`); a 500-character message is stored clamped to 240; a filled honeypot is refused (`400 rejected`) and never stored; a submitted note is `pending` and **absent from the public list** until accepted; a wrong or missing studio token gives `401`; accept puts the note on the wall and reject removes it from the queue with neither ever appearing unapproved; the public view carries no `secret`/`secretHash`; the owning tab deletes its own note, a wrong secret cannot (`404`/`403`); an unknown id gives `404`; the sixth note in a minute is refused (`429 too-many`); malformed JSON fails as `400`, not `500`.
 - In the browser, with the real interface: the empty form shows four inline field errors plus a summary and sends nothing; a valid note reports “Sent. Waiting for the presenter”, resets the fields and the counter, and reveals the withdraw control; the studio gate opens the queue only for the right code, stamps the top note with the EAT clock and the programme it was sent during, and `A`/`R`/`D` accept, reject and delete it with the matching status line; an accepted note then renders in every listener's wall, and a note sent by another session renders **without** a withdraw control; the wall repaints on an EN/SW switch and in the light theme; with the store switched off (`WALL_DEV=0`) both endpoints answer `501`, the homepage hides the form and feed and states that the wall is not connected, and the queue says it is not connected instead of showing an empty list. `studio.html` was confirmed `noindex, nofollow`, with no canonical, no structured data and no link to it from the navigation.
 - Console stayed clean throughout, no audio element is created and the player still reads “Ready — press play to listen” after every wall interaction (no autoplay was introduced), and the player volume now defaults to maximum — verified in a clean profile where `#volume` starts at `100`, while a listener who has moved the slider keeps their own saved level.
-- SEO with the Pages address configured: canonical tags, Open Graph URLs and a 9-page `sitemap.xml` are written on every build. `podcast.xml` is only written by the recorder, and only while a real URL is set.
+- **Event page, tested in the browser on 2026-11-01.** The countdown reads the start from the page's own `<time>` and showed `47 d · 7 hr · 12 min` on 1 November; forcing the attribute to a time 2½ hours earlier moved the label to `event.countLive` (“The night is under way.”) with the value cleared, and to a time 62 hours earlier moved it to `event.countPast` — both verified in Kiswahili too (`Tukio hili lilitokea…`). Switching language re-renders the units (`47 siku · 7 saa · 8 dak`). The poster loads uncropped at 3:4 in its frame, the page has no horizontal overflow at a 531 px viewport, and `document.title` follows the language. The share button was captured calling `navigator.share` with the event summary and the event URL (`…/kuria-night.html`), while the footer share still sends the generic station line. Clicking the homepage card routed in place — a `window` marker set before the click survived, so the document never reloaded and audio would keep playing. The News page's Events filter returns exactly the one real card, and both `RadioStation` and `Event` JSON-LD are present with the three priced offers. Console stayed clean.
+- SEO with the Pages address configured: canonical tags, Open Graph URLs and a 10-page `sitemap.xml` are written on every build. `podcast.xml` is only written by the recorder, and only while a real URL is set.
 
 ---
 
@@ -435,7 +462,7 @@ The local preview server already sends the first four headers. Google Maps is li
 - **Withdrawal needs the original tab** — the delete secret is held only in that listener's `sessionStorage` and shown once. Closing the tab or using another device removes the self-service option; a presenter can still delete the note.
 - **No backend for the other forms** — the contact and announcement forms still hand off to WhatsApp or email; the website does not store or deliver those submissions itself.
 - **Continuous listening needs JavaScript** — pages are swapped in place only when the browser supports `fetch`, the History API and `DOMParser`; every other visitor gets ordinary page loads, and in that case the stream restarts when the page changes. There is no service worker keeping audio alive across a hard reload, and adding one is a deliberate next step rather than an assumption. The JSON-LD block belongs to the page first loaded, so a crawler or a manually reloaded page always reads the server-rendered file for that URL.
-- **Sample content** — news stories are layout samples, clearly labelled. Events are empty until confirmed.
+- **Sample content** — the news story cards are still layout samples, clearly labelled. The one exception is the Kuria Night event, which is real content from the station's own poster (§4.10); its line-up and running order are marked as unpublished on the page rather than filled in.
 - **Presenter images and bios** — one portrait (Lucas Magesa) comes from the station's own public post; the other six cards keep neutral monograms and pending notes, and no biography has been written for anyone. No real presenter photograph or biography was invented.
 - **Public channels** — Facebook, YouTube and X were verified against the station's own publications and a public radio directory, but the station has not yet confirmed them for this site, and no official Instagram or TikTok account could be found.
 - **News team roles** — names are shown without titles or credentials.

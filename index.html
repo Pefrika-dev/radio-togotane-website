@@ -20,8 +20,8 @@
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/css/styles.css?v=23eaef79">
-  <script src="assets/js/boot.js?v=23eaef79"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=f3b82b6e">
+  <script src="assets/js/boot.js?v=f3b82b6e"></script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -440,11 +440,16 @@
         <p data-i18n="announce.body">Condolences, lost and found items, meetings, church, school and public notices can be submitted for review. Announcements are checked by station staff before they are broadcast or published.</p>
         <a class="btn btn--accent" href="announce.html" data-i18n="announce.cta">Submit an announcement</a>
       </article>
-      <article class="cta-card cta-card--quiet" id="events">
-        <p class="eyebrow" data-i18n="events.eyebrow">Events</p>
-        <h2 class="cta-card__title" data-i18n="events.emptyTitle">No confirmed events yet.</h2>
-        <p data-i18n="events.emptyBody">Verified community events will be listed here once the station confirms the date, venue and contact details.</p>
-        <a class="link-arrow" href="contact.html" data-i18n="events.cta">Tell us about an event</a>
+      <article class="cta-card cta-card--event" id="events">
+        <p class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span> <span data-i18n="event.confirmedFlag">Confirmed event</span></p>
+        <div class="cta-card__media">
+          <img src="assets/images/events/kuria-night-poster-640.webp" width="640" height="853" loading="lazy" decoding="async"
+               alt="Poster for Togotane Cultural Kuria Night presented by Radio Togotane 88.3 FM, showing Kuria dancers in beaded regalia and leopard-skin garments." data-i18n-alt="alt.kuriaPoster">
+        </div>
+        <h2 class="cta-card__title" data-i18n="event.cardTitle">Togotane Cultural Kuria Night</h2>
+        <p class="cta-card__when" data-i18n="event.cardMeta">Friday 18 December 2026 · 6 PM · The Hood Hotel, Kehancha</p>
+        <p data-i18n="event.cardBody">The station's own Kuria culture night, with tickets from KSh 500. The poster carries the date, venue, prices and the numbers to call.</p>
+        <a class="btn btn--accent" href="kuria-night.html" data-i18n="event.cardCta">See the event details</a>
       </article>
     </div>
   </section>
@@ -591,9 +596,9 @@
   <p class="sheet__note" data-i18n="player.pendingNote">The published programme schedule remains available while the online stream is offline.</p>
 </dialog>
 
-  <script src="assets/js/config.js?v=23eaef79" defer></script>
-  <script src="assets/js/data.js?v=23eaef79" defer></script>
-  <script src="assets/js/i18n.js?v=23eaef79" defer></script>
-  <script src="assets/js/app.js?v=23eaef79" defer></script>
+  <script src="assets/js/config.js?v=f3b82b6e" defer></script>
+  <script src="assets/js/data.js?v=f3b82b6e" defer></script>
+  <script src="assets/js/i18n.js?v=f3b82b6e" defer></script>
+  <script src="assets/js/app.js?v=f3b82b6e" defer></script>
 </body>
 </html>
