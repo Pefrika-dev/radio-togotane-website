@@ -32,10 +32,27 @@ ogImage: assets/images/events/kuria-night-poster-1200.jpg
           </div>
         </dl>
 
-        <p class="event-count" data-event-count>
-          <span data-event-count-label data-i18n="event.countPrefix">The night begins in</span>
-          <strong data-event-count-value>—</strong>
-        </p>
+        <div class="event-count" data-event-count role="timer">
+          <p class="event-count__label" data-event-count-label data-i18n="event.countPrefix">The night begins in</p>
+          <div class="event-count__units" data-event-count-units>
+            <div class="count-unit">
+              <span class="count-unit__value" data-count="days">--</span>
+              <span class="count-unit__label" data-i18n="event.unitDays">days</span>
+            </div>
+            <div class="count-unit">
+              <span class="count-unit__value" data-count="hours">--</span>
+              <span class="count-unit__label" data-i18n="event.unitHours">hours</span>
+            </div>
+            <div class="count-unit">
+              <span class="count-unit__value" data-count="minutes">--</span>
+              <span class="count-unit__label" data-i18n="event.unitMins">minutes</span>
+            </div>
+            <div class="count-unit">
+              <span class="count-unit__value" data-count="seconds">--</span>
+              <span class="count-unit__label" data-i18n="event.unitSecs">seconds</span>
+            </div>
+          </div>
+        </div>
 
         <div class="page-hero__actions">
           <a class="btn btn--accent" href="tel:+254728700802" data-i18n="actions.bookTicket">Book a ticket by phone</a>

@@ -454,7 +454,6 @@
 
     updateTuneIn(now, current);
     updateWallClock();
-    updateEventCountdown();
 
     const dockNow = $('#dock-now');
     if (dockNow) {
@@ -462,37 +461,50 @@
     }
   }
 
-  /* The event page counts down to the start printed in its own <time> element,
-   * so the copy and the timer can never drift apart. After the night has passed
-   * it says so instead of showing a negative count. */
+  /* The event page counts down to the start printed in its own <time> element, so
+   * the copy and the timer can never drift apart. It ticks in whole seconds and
+   * stops showing numbers once the night has begun, rather than counting negative. */
+  const COUNT_UNITS = [
+    { name: 'days', of: 86400 },
+    { name: 'hours', of: 3600 },
+    { name: 'minutes', of: 60 },
+    { name: 'seconds', of: 1 },
+  ];
+
+  function setCountUnit(box, name, amount) {
+    const cell = $('[data-count="' + name + '"]', box);
+    if (!cell) return;
+    const text = (amount < 10 ? '0' : '') + amount;
+    if (cell.textContent !== text) cell.textContent = text;
+  }
+
   function updateEventCountdown() {
     const box = $('[data-event-count]');
     const start = $('[data-event-start]');
     if (!box || !start) return;
 
     const label = $('[data-event-count-label]', box);
-    const value = $('[data-event-count-value]', box);
+    const units = $('[data-event-count-units]', box);
     const at = Date.parse(start.getAttribute('datetime'));
-    if (!label || !value || isNaN(at)) return;
+    if (!label || !units || isNaN(at)) return;
 
     const ms = at - Date.now();
-    const labelKey = ms <= 0 ? (ms > -6 * 3600 * 1000 ? 'event.countLive' : 'event.countPast') : 'event.countPrefix';
+    const live = ms <= 0 && ms > -6 * 3600 * 1000;
+    const labelKey = ms > 0 ? 'event.countPrefix' : live ? 'event.countLive' : 'event.countPast';
+
+    box.setAttribute('data-state', ms > 0 ? 'counting' : live ? 'live' : 'past');
     label.setAttribute('data-i18n', labelKey);
     label.textContent = t(labelKey);
 
-    if (ms <= 0) {
-      value.textContent = '';
-      return;
-    }
+    units.hidden = ms <= 0;
+    if (ms <= 0) return;
 
-    const totalMinutes = Math.floor(ms / 60000);
-    const days = Math.floor(totalMinutes / 1440);
-    const hours = Math.floor((totalMinutes % 1440) / 60);
-    const parts = [];
-    if (days) parts.push(days + ' ' + t('event.abbrDays'));
-    parts.push(hours + ' ' + t('event.abbrHours'));
-    parts.push((totalMinutes % 60) + ' ' + t('event.abbrMins'));
-    value.textContent = parts.join(' · ');
+    let left = Math.floor(ms / 1000);
+    COUNT_UNITS.forEach(function (unit) {
+      const amount = Math.floor(left / unit.of);
+      left -= amount * unit.of;
+      setCountUnit(box, unit.name, amount);
+    });
   }
 
   function initTabs(scope) {
@@ -2686,6 +2698,11 @@
     initRouter();
     window.setInterval(updateNow, 15000);
 
+    /* The event countdown reads as a live timer or it reads as nothing, so it gets
+     * its own second-by-second tick instead of riding on the quarter-minute clock.
+     * It costs one querySelector on the pages that have no event on it. */
+    window.setInterval(updateEventCountdown, 1000);
+
     /* The wall and the queue are polled, not pushed: a county station does not
      * need a socket, and a few seconds is inside the pace of a live show. The
      * poll is silent while the tab is hidden and refetches on the way back. */
@@ -2699,6 +2716,9 @@
 
     window.addEventListener('visibilitychange', function () {
       if (doc.visibilityState !== 'hidden') {
+        /* A hidden tab has its timers throttled, so the count is refreshed by hand
+         * on the way back rather than left showing the minute it was put away at. */
+        updateEventCountdown();
         if ($('[data-wall]')) fetchWall();
         if ($('[data-studio-board]') && studio.token) fetchStudio();
       }
@@ -2723,6 +2743,7 @@
     initStudio(main);
     preselectTopic();
     applyLanguage(lang, false);
+    updateEventCountdown();
   }
 
   function init() {

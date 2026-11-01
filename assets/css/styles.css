@@ -4069,25 +4069,78 @@ html[lang='sw'] .hero__alt {
 }
 
 .event-count {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.55rem;
+  display: grid;
+  gap: 0.85rem;
   margin-top: 1.5rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.15rem 1.15rem;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--surface);
-  font-size: 0.82rem;
+}
+
+.event-count__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.event-count strong {
+.event-count__units {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.count-unit {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.32rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.62rem 0.2rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.count-unit__value {
   font-family: 'Fraunces', Georgia, serif;
-  font-size: 1.3rem;
+  font-size: clamp(1.5rem, 6vw, 2.1rem);
   font-weight: 600;
-  letter-spacing: 0.01em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   color: var(--accent);
+}
+
+.count-unit__label {
+  font-size: clamp(0.52rem, 1.6vw, 0.62rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Once the night has started there is nothing left to count, so the line stops
+ * being a caption over digits and becomes the sentence it is. */
+.event-count[data-state='live'],
+.event-count[data-state='past'] {
+  padding: 0.85rem 1.15rem;
+}
+
+.event-count[data-state='live'] {
+  border-color: var(--live);
+  background: var(--accent-soft);
+}
+
+.event-count[data-state='live'] .event-count__label,
+.event-count[data-state='past'] .event-count__label {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
 }
 
 .event-prose p {
